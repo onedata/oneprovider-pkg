@@ -1,0 +1,15 @@
+[submodule "bamboos"]
+	path = bamboos
+	url = ../bamboos
+[submodule "onepanel"]
+	path = onepanel
+	url = ../onepanel
+[submodule "op_worker"]
+	path = op_worker
+	url = ../op-worker
+[submodule "cluster_manager"]
+	path = cluster_manager
+	url = ../cluster-manager
+[submodule "cluster_worker"]
+	path = cluster_worker
+	url = ../cluster-worker
