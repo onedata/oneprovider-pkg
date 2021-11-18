@@ -194,10 +194,10 @@ test_env_up:
 	${TEST_RUN} --test-type env_up -vvv --test-dir tests/env_up
 
 test_provider_packaging test_packaging:
-	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneprovider" -vvv --test-dir tests/packaging -s)
+	$(call retry, ${TEST_RUN} --test-type packaging -k "oneprovider" -vvv --test-dir tests/packaging -s)
 
 test_oneclient_base_packaging:
-	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneclient_base" -vvv --test-dir tests/packaging -s)
+	$(call retry, ${TEST_RUN} --test-type packaging -k "oneclient_base" -vvv --test-dir tests/packaging -s)
 
 test_oneclient_packaging:
 	$(call retry, ${TEST_RUN} --test-type packaging -k "oneclient and not oneclient_base" -vvv --test-dir tests/packaging -s)
