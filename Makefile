@@ -306,14 +306,17 @@ rpm_oneprovider: rpm_op_panel rpm_op_worker rpm_cluster_manager
 	$(call mv_rpm, oneprovider_meta)
 
 rpm_op_panel: clean_onepanel rpmdirs
+	make clean_all
 	$(call retry, $(call make_rpm, onepanel, package) -e PKG_VERSION=$(OP_PANEL_VERSION) -e REL_TYPE=oneprovider)
 	$(call mv_rpm, onepanel)
 
 rpm_op_worker: clean_op_worker rpmdirs
+	make clean_all
 	$(call retry, $(call make_rpm, op_worker, package) -e PKG_VERSION=$(OP_WORKER_VERSION))
 	$(call mv_rpm, op_worker)
 
 rpm_cluster_manager: clean_cluster_manager rpmdirs
+	make clean_all
 	$(call retry, $(call make_rpm, cluster_manager, package) -e PKG_VERSION=$(CLUSTER_MANAGER_VERSION))
 	$(call mv_rpm, cluster_manager)
 
