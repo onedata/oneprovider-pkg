@@ -83,7 +83,7 @@ NO_CACHE :=  $(shell if [ "${NO_CACHE}" != "" ]; then echo "--no-cache"; fi)
 
 make = $(1)/make.py -s $(1) -r . $(NO_CACHE)
 clean = $(call make, $(1)) clean
-retry = RETRIES=$(RETRIES); until $(1) && return 0 || [ $$RETRIES -eq 0 ]; do sleep $(RETRY_SLEEP); RETRIES=`expr $$RETRIES - 1`; echo "===== Cleaning up... ====="; make clean_all; echo "\n\n\n===== Retrying build... ====="; done; return 1 
+retry = RETRIES=$(RETRIES); until $(1) && [ $$RETRIES -ne 3 ] && return 0 || [ $$RETRIES -eq 0 ]; do sleep $(RETRY_SLEEP); RETRIES=`expr $$RETRIES - 1`; echo "===== Cleaning up... ====="; $(2); echo "\n\n\n===== Retrying build... ====="; done; return 1 
 make_rpm = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) $(2)  
 mv_rpm = mv $(1)/package/packages/*.src.rpm package/$(DISTRIBUTION)/SRPMS && \
 	mv $(1)/package/packages/*.x86_64.rpm package/$(DISTRIBUTION)/x86_64
@@ -290,7 +290,9 @@ clean_packages:
 ## RPM packaging
 ##
 
-rpm: rpm_oneprovider rpm_oneclient
+# rpm: rpm_oneprovider rpm_oneclient
+
+rpm: rpm_oneprovider 
 
 rpm_oneprovider: rpm_op_panel rpm_op_worker rpm_cluster_manager
 	cp -f oneprovider_meta/oneprovider.spec.template oneprovider_meta/oneprovider.spec
@@ -316,18 +318,15 @@ rpm_oneprovider: rpm_op_panel rpm_op_worker rpm_cluster_manager
 	$(call mv_rpm, oneprovider_meta)
 
 rpm_op_panel: clean_onepanel rpmdirs
-	make clean_all
-	$(call retry, $(call make_rpm, onepanel, package) -e PKG_VERSION=$(OP_PANEL_VERSION) -e REL_TYPE=oneprovider)
+	$(call retry, $(call make_rpm, onepanel, package) -e PKG_VERSION=$(OP_PANEL_VERSION) -e REL_TYPE=oneprovider, make clean_onepanel rpmdirs)
 	$(call mv_rpm, onepanel)
 
 rpm_op_worker: clean_op_worker rpmdirs
-	make clean_all
-	$(call retry, $(call make_rpm, op_worker, package) -e PKG_VERSION=$(OP_WORKER_VERSION))
+	$(call retry, $(call make_rpm, op_worker, package) -e PKG_VERSION=$(OP_WORKER_VERSION), make clean_op_worker rpmdirs)
 	$(call mv_rpm, op_worker)
 
 rpm_cluster_manager: clean_cluster_manager rpmdirs
-	make clean_all
-	$(call retry, $(call make_rpm, cluster_manager, package) -e PKG_VERSION=$(CLUSTER_MANAGER_VERSION))
+	$(call retry, $(call make_rpm, cluster_manager, package) -e PKG_VERSION=$(CLUSTER_MANAGER_VERSION), make clean_cluster_manager rpmdirs)
 	$(call mv_rpm, cluster_manager)
 
 # rpm_oneclient_base: clean_oneclient rpmdirs
