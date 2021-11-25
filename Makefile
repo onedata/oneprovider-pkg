@@ -8,8 +8,8 @@ DOCKER_REG_PASSWORD     ?= ""
 PROD_RELEASE_BASE_IMAGE ?= "onedata/oneprovider-common:2102-3"
 DEV_RELEASE_BASE_IMAGE  ?= "onedata/oneprovider-dev-common:2102-6"
 HTTP_PROXY              ?= "http://proxy.devel.onedata.org:3128"
-CONDA_TOKEN             ?= ""
-CONDA_BUILD_OPTIONS     ?= ""
+# CONDA_TOKEN             ?= ""
+# CONDA_BUILD_OPTIONS     ?= ""
 RETRIES                 ?= 0
 RETRY_SLEEP             ?= 300
 
@@ -28,18 +28,18 @@ endif
 ifeq ($(strip $(OP_PANEL_VERSION)),)
 OP_PANEL_VERSION        := $(shell git -C onepanel describe --tags --always --abbrev=7)
 endif
-ifeq ($(strip $(ONECLIENT_VERSION)),)
-ONECLIENT_VERSION       := $(shell git -C oneclient describe --tags --always --abbrev=7)
-endif
-ifeq ($(strip $(FSONEDATAFS_VERSION)),)
-FSONEDATAFS_VERSION       := $(shell git -C fs-onedatafs describe --tags --always --abbrev=7)
-endif
-ifeq ($(strip $(ONEDATAFS_JUPYTER_VERSION)),)
-ONEDATAFS_JUPYTER_VERSION       := $(shell git -C onedatafs-jupyter describe --tags --always --abbrev=7)
-endif
-ifeq ($(strip $(ONEDATAFS_JUPYTER_VERSION)),)
-ONEDATAFS_JUPYTER_VERSION       := $(shell git -C onedatafs-jupyter describe --tags --always)
-endif
+# ifeq ($(strip $(ONECLIENT_VERSION)),)
+# ONECLIENT_VERSION       := $(shell git -C oneclient describe --tags --always --abbrev=7)
+# endif
+# ifeq ($(strip $(FSONEDATAFS_VERSION)),)
+# FSONEDATAFS_VERSION       := $(shell git -C fs-onedatafs describe --tags --always --abbrev=7)
+# endif
+# ifeq ($(strip $(ONEDATAFS_JUPYTER_VERSION)),)
+# ONEDATAFS_JUPYTER_VERSION       := $(shell git -C onedatafs-jupyter describe --tags --always --abbrev=7)
+# endif
+# ifeq ($(strip $(ONEDATAFS_JUPYTER_VERSION)),)
+# ONEDATAFS_JUPYTER_VERSION       := $(shell git -C onedatafs-jupyter describe --tags --always)
+# endif
 
 
 
@@ -47,13 +47,13 @@ ONEPROVIDER_VERSION           := $(shell echo ${ONEPROVIDER_VERSION} | tr - .)
 CLUSTER_MANAGER_VERSION       := $(shell echo ${CLUSTER_MANAGER_VERSION} | tr - .)
 OP_WORKER_VERSION             := $(shell echo ${OP_WORKER_VERSION} | tr - .)
 OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
-ONECLIENT_VERSION             := $(shell echo ${ONECLIENT_VERSION} | tr - .)
-FSONEDATAFS_VERSION           := $(shell echo ${FSONEDATAFS_VERSION} | tr - .)
-ONEDATAFS_JUPYTER_VERSION     := $(shell echo ${ONEDATAFS_JUPYTER_VERSION} | tr - .)
+# ONECLIENT_VERSION             := $(shell echo ${ONECLIENT_VERSION} | tr - .)
+# FSONEDATAFS_VERSION           := $(shell echo ${FSONEDATAFS_VERSION} | tr - .)
+# ONEDATAFS_JUPYTER_VERSION     := $(shell echo ${ONEDATAFS_JUPYTER_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
 PKG_BUILDER_VERSION     ?= -3
-ONECLIENT_FPMPACKAGE_TMP ?= package_fpm
+# ONECLIENT_FPMPACKAGE_TMP ?= package_fpm
 
 ifdef IGNORE_XFAIL
 TEST_RUN := ./test_run.py --ignore-xfail
@@ -103,7 +103,7 @@ mv_noarch_deb = mv $(1)/package/packages/*_all.deb package/$(DISTRIBUTION)/binar
 	mv $(1)/package/packages/*.debian.tar.xz package/$(DISTRIBUTION)/source | true && \
 	mv $(1)/package/packages/*.changes package/$(DISTRIBUTION)/source | true
 unpack = tar xzf $(1).tar.gz
-make_conda = $(call make, $(1)) -e CONDA_TOKEN=$(CONDA_TOKEN) -i onedata/conda:v2 $(2)
+# make_conda = $(call make, $(1)) -e CONDA_TOKEN=$(CONDA_TOKEN) -i onedata/conda:v2 $(2)
 
 get_release:
 	@echo $(RELEASE)
@@ -113,9 +113,9 @@ print_package_versions:
 	@echo "cluster-manager:\t" $(CLUSTER_MANAGER_VERSION)
 	@echo "op-worker:\t\t" $(OP_WORKER_VERSION)
 	@echo "op-panel:\t\t" $(OP_PANEL_VERSION)
-	@echo "oneclient:\t\t" $(ONECLIENT_VERSION)
-	@echo "fs-onedatafs:\t\t" $(FSONEDATAFS_VERSION)
-	@echo "onedatafs-jupyter:\t" $(ONEDATAFS_JUPYTER_VERSION)
+	# @echo "oneclient:\t\t" $(ONECLIENT_VERSION)
+	# @echo "fs-onedatafs:\t\t" $(FSONEDATAFS_VERSION)
+	# @echo "onedatafs-jupyter:\t" $(ONEDATAFS_JUPYTER_VERSION)
 
 ##
 ## Submodules
@@ -130,17 +130,20 @@ submodules:
 ## Build
 ##
 
-build: build_appmock build_oz_worker build_oneclient build_op_worker \
+# build: build_appmock build_oz_worker build_oneclient build_op_worker \
+#     build_cluster_manager build_cluster_worker build_onepanel
+
+build:  build_op_worker \
     build_cluster_manager build_cluster_worker build_onepanel
 
-build_appmock: submodules
-	$(call make, appmock)
+# build_appmock: submodules
+# 	$(call make, appmock)
 
-build_oz_worker: submodules
-	$(call make, oz_worker)
+# build_oz_worker: submodules
+# 	$(call make, oz_worker)
 
-build_oneclient: submodules
-	$(call make, oneclient) deb-info
+# build_oneclient: submodules
+# 	$(call make, oneclient) deb-info
 
 build_op_worker: submodules
 	$(call make, op_worker)
@@ -158,15 +161,19 @@ build_onepanel: submodules
 ## Artifacts
 ##
 
-artifact: artifact_appmock artifact_oneclient artifact_op_worker \
-    artifact_oz_worker artifact_cluster_manager artifact_cluster_worker \
+# artifact: artifact_appmock artifact_oneclient artifact_op_worker \
+#     artifact_oz_worker artifact_cluster_manager artifact_cluster_worker \
+#     artifact_onepanel
+
+artifact: artifact_op_worker \
+    artifact_cluster_manager artifact_cluster_worker \
     artifact_onepanel
 
-artifact_appmock:
-	$(call unpack, appmock)
+# artifact_appmock:
+# 	$(call unpack, appmock)
 
-artifact_oneclient:
-	$(call unpack, oneclient)
+# artifact_oneclient:
+# 	$(call unpack, oneclient)
 
 artifact_op_worker:
 	$(call unpack, op_worker)
@@ -197,14 +204,14 @@ test_env_up:
 test_provider_packaging test_packaging:
 	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneprovider" -vvv --test-dir tests/packaging -s)
 
-test_oneclient_base_packaging:
-	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneclient_base" -vvv --test-dir tests/packaging -s)
+# test_oneclient_base_packaging:
+# 	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneclient_base" -vvv --test-dir tests/packaging -s)
 
-test_oneclient_packaging:
-	$(call retry, ${TEST_RUN} --test-type packaging -k "oneclient and not oneclient_base" -vvv --test-dir tests/packaging -s)
+# test_oneclient_packaging:
+# 	$(call retry, ${TEST_RUN} --test-type packaging -k "oneclient and not oneclient_base" -vvv --test-dir tests/packaging -s)
 
-test_fsonedatafs_packaging:
-	$(call retry, ${TEST_RUN} --test-type packaging -k "fsonedatafs" -vvv --test-dir tests/packaging -s)
+# test_fsonedatafs_packaging:
+# 	$(call retry, ${TEST_RUN} --test-type packaging -k "fsonedatafs" -vvv --test-dir tests/packaging -s)
 
 test:
 	${TEST_RUN} --test-type acceptance -vvv --test-dir tests/acceptance/scenarios/${SUITE}.py
@@ -240,12 +247,15 @@ test_profiling:
 ## Clean
 ##
 
-clean_all: clean_appmock clean_oz_worker clean_oneclient \
-           clean_op_worker clean_onepanel clean_cluster_manager \
+# clean_all: clean_appmock clean_oz_worker clean_oneclient \
+#            clean_op_worker clean_onepanel clean_cluster_manager \
+#            clean_cluster_worker clean_packages
+
+clean_all: clean_op_worker clean_onepanel clean_cluster_manager \
            clean_cluster_worker clean_packages
 
-clean_appmock:
-	$(call clean, appmock)
+# clean_appmock:
+# 	$(call clean, appmock)
 
 clean_onepanel:
 	$(call clean, onepanel)
@@ -256,14 +266,14 @@ clean_oz_worker:
 clean_op_worker:
 	$(call clean, op_worker)
 
-clean_oneclient:
-	$(call clean, oneclient)
+# clean_oneclient:
+# 	$(call clean, oneclient)
 
-clean_fsonedatafs:
-	$(call clean, fs-onedatafs)
+# clean_fsonedatafs:
+# 	$(call clean, fs-onedatafs)
 
-clean_onedatafs_jupyter:
-	$(call clean, onedatafs-jupyter)
+# clean_onedatafs_jupyter:
+# 	$(call clean, onedatafs-jupyter)
 
 clean_cluster_manager:
 	$(call clean, cluster_manager)
@@ -320,19 +330,19 @@ rpm_cluster_manager: clean_cluster_manager rpmdirs
 	$(call retry, $(call make_rpm, cluster_manager, package) -e PKG_VERSION=$(CLUSTER_MANAGER_VERSION))
 	$(call mv_rpm, cluster_manager)
 
-rpm_oneclient_base: clean_oneclient rpmdirs
-	$(call retry, $(call make_rpm, oneclient, rpm) -e PKG_VERSION=$(ONECLIENT_VERSION))
-	$(call mv_rpm, oneclient)
+# rpm_oneclient_base: clean_oneclient rpmdirs
+# 	$(call retry, $(call make_rpm, oneclient, rpm) -e PKG_VERSION=$(ONECLIENT_VERSION))
+# 	$(call mv_rpm, oneclient)
 
-rpm_fsonedatafs: clean_fsonedatafs rpmdirs
-	$(call retry, $(call make_rpm, fs-onedatafs, rpm) -e PKG_VERSION=$(FSONEDATAFS_VERSION) -e ONECLIENT_VERSION=$(ONECLIENT_VERSION))
-	$(call mv_noarch_rpm, fs-onedatafs)
+# rpm_fsonedatafs: clean_fsonedatafs rpmdirs
+# 	$(call retry, $(call make_rpm, fs-onedatafs, rpm) -e PKG_VERSION=$(FSONEDATAFS_VERSION) -e ONECLIENT_VERSION=$(ONECLIENT_VERSION))
+# 	$(call mv_noarch_rpm, fs-onedatafs)
 
-rpm_onedatafs_jupyter: clean_onedatafs_jupyter rpmdirs
-	$(call retry, $(call make_rpm, onedatafs-jupyter, rpm) -e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
-		                                     -e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
-		                                     -e ONECLIENT_VERSION=$(ONECLIENT_VERSION))
-	$(call mv_noarch_rpm, onedatafs-jupyter)
+# rpm_onedatafs_jupyter: clean_onedatafs_jupyter rpmdirs
+# 	$(call retry, $(call make_rpm, onedatafs-jupyter, rpm) -e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
+# 		                                     -e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
+# 		                                     -e ONECLIENT_VERSION=$(ONECLIENT_VERSION))
+# 	$(call mv_noarch_rpm, onedatafs-jupyter)
 
 rpmdirs:
 	mkdir -p package/$(DISTRIBUTION)/SRPMS package/$(DISTRIBUTION)/x86_64
@@ -372,19 +382,19 @@ deb_cluster_manager: clean_cluster_manager debdirs
 		-e DISTRIBUTION=$(DISTRIBUTION)
 	$(call mv_deb, cluster_manager)
 
-deb_oneclient_base: clean_oneclient debdirs
-	$(call make_deb, oneclient, deb) -e PKG_VERSION=$(ONECLIENT_VERSION)
-	$(call mv_deb, oneclient)
+# deb_oneclient_base: clean_oneclient debdirs
+# 	$(call make_deb, oneclient, deb) -e PKG_VERSION=$(ONECLIENT_VERSION)
+# 	$(call mv_deb, oneclient)
 
-deb_fsonedatafs: clean_fsonedatafs debdirs
-	$(call make_deb, fs-onedatafs, deb) -e PKG_VERSION=$(FSONEDATAFS_VERSION) -e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
-	$(call mv_noarch_deb, fs-onedatafs)
+# deb_fsonedatafs: clean_fsonedatafs debdirs
+# 	$(call make_deb, fs-onedatafs, deb) -e PKG_VERSION=$(FSONEDATAFS_VERSION) -e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
+# 	$(call mv_noarch_deb, fs-onedatafs)
 
-deb_onedatafs_jupyter: clean_onedatafs_jupyter debdirs
-	$(call make_deb, onedatafs-jupyter, deb) -e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
-		                                     -e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
-		                                     -e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
-	$(call mv_noarch_deb, onedatafs-jupyter)
+# deb_onedatafs_jupyter: clean_onedatafs_jupyter debdirs
+# 	$(call make_deb, onedatafs-jupyter, deb) -e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
+# 		                                     -e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
+# 		                                     -e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
+# 	$(call mv_noarch_deb, onedatafs-jupyter)
 
 debdirs:
 	mkdir -p package/$(DISTRIBUTION)/source package/$(DISTRIBUTION)/binary-amd64
@@ -435,87 +445,87 @@ docker-dev:
 # Build intermediate Oneclient Docker image with oneclient installed from
 # a normal (oneclient-base) package into /usr/ prefix.
 #
-docker_oneclient_base:
-	$(MAKE) -C oneclient docker-base PKG_VERSION=$(ONECLIENT_VERSION) RELEASE=$(RELEASE) \
-		                             FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
-		                             HTTP_PROXY=$(HTTP_PROXY)
+# docker_oneclient_base:
+# 	$(MAKE) -C oneclient docker-base PKG_VERSION=$(ONECLIENT_VERSION) RELEASE=$(RELEASE) \
+# 		                             FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
+# 		                             HTTP_PROXY=$(HTTP_PROXY)
 
 #
 # Build final Oneclient Docker image with oneclient installed from
 # self contained package (oneclient) into /opt/oneclient prefix and
 # symlinked into /usr prefix.
 #
-docker_oneclient:
-	$(MAKE) -C oneclient docker PKG_VERSION=$(ONECLIENT_VERSION) RELEASE=$(RELEASE) \
-                                FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
-                                HTTP_PROXY=$(HTTP_PROXY)
+# docker_oneclient:
+# 	$(MAKE) -C oneclient docker PKG_VERSION=$(ONECLIENT_VERSION) RELEASE=$(RELEASE) \
+#                                 FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
+#                                 HTTP_PROXY=$(HTTP_PROXY)
 
 #
 # Build Jupyter Docker with OnedataFS content manager plugin
 #
-docker_onedatafs_jupyter:
-	$(MAKE) -C onedatafs-jupyter docker ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
-		                         ONEDATAFS_JUPYTER_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
-		                         FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
-		                         HTTP_PROXY=$(HTTP_PROXY) \
-		                         RELEASE=$(RELEASE)
+# docker_onedatafs_jupyter:
+# 	$(MAKE) -C onedatafs-jupyter docker ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
+# 		                         ONEDATAFS_JUPYTER_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
+# 		                         FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION) \
+# 		                         HTTP_PROXY=$(HTTP_PROXY) \
+# 		                         RELEASE=$(RELEASE)
 
 #
 # Build self-contained Oneclient archive, by extracting all necessary files
 # from intermediate Oneclient Docker image (oneclient-base)
 #
-oneclient_tar oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz:
-	$(MAKE) -C oneclient oneclient_tar
+# oneclient_tar oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz:
+# 	$(MAKE) -C oneclient oneclient_tar
 
 #
 # Build production Oneclient RPM using FPM tool from self contained archive
 #
-oneclient_rpm: oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz rpmdirs
-	$(MAKE) -C oneclient DISTRIBUTION=$(DISTRIBUTION) ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
-		oneclient_rpm
-	mv oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient*.rpm package/$(DISTRIBUTION)/x86_64
+# oneclient_rpm: oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz rpmdirs
+# 	$(MAKE) -C oneclient DISTRIBUTION=$(DISTRIBUTION) ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
+# 		oneclient_rpm
+# 	mv oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient*.rpm package/$(DISTRIBUTION)/x86_64
 
 #
 # Build production Oneclient DEB using FPM tool from self-contained archive
 #
-oneclient_deb: oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz debdirs
-	$(MAKE) -C oneclient DISTRIBUTION=$(DISTRIBUTION) ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
-		oneclient_deb
-	mv oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient*.deb package/$(DISTRIBUTION)/binary-amd64
+# oneclient_deb: oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient-bin.tar.gz debdirs
+# 	$(MAKE) -C oneclient DISTRIBUTION=$(DISTRIBUTION) ONECLIENT_VERSION=$(ONECLIENT_VERSION) \
+# 		oneclient_deb
+# 	mv oneclient/$(ONECLIENT_FPMPACKAGE_TMP)/oneclient*.deb package/$(DISTRIBUTION)/binary-amd64
 
 #
 # Build and upload oneclient conda packages
 #
-oneclient_conda:
-	$(call make_conda, oneclient, conda/oneclient) \
-		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
-		-e PKG_VERSION=$(ONECLIENT_VERSION)
+# oneclient_conda:
+# 	$(call make_conda, oneclient, conda/oneclient) \
+# 		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
+# 		-e PKG_VERSION=$(ONECLIENT_VERSION)
 
 #
 # Build and upload onedatafs conda packages
 #
-onedatafs_conda:
-	$(call make_conda, oneclient, conda/onedatafs) \
-		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
-		-e PKG_VERSION=$(ONECLIENT_VERSION)
+# onedatafs_conda:
+# 	$(call make_conda, oneclient, conda/onedatafs) \
+# 		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
+# 		-e PKG_VERSION=$(ONECLIENT_VERSION)
 
 #
 # Build and upload fs.onedatafs conda packages
 #
-fsonedatafs_conda:
-	$(call make_conda, fs-onedatafs, conda) \
-		-e PKG_VERSION=$(FSONEDATAFS_VERSION) \
-		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
-		-e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
+# fsonedatafs_conda:
+# 	$(call make_conda, fs-onedatafs, conda) \
+# 		-e PKG_VERSION=$(FSONEDATAFS_VERSION) \
+# 		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
+# 		-e ONECLIENT_VERSION=$(ONECLIENT_VERSION)
 
 #
 # Build and upload onedatafs-jupyter conda packages
 #
-onedatafs_jupyter_conda:
-	$(call make_conda, onedatafs-jupyter, conda) \
-		-e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
-		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
-		-e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION)
+# onedatafs_jupyter_conda:
+# 	$(call make_conda, onedatafs-jupyter, conda) \
+# 		-e PKG_VERSION=$(ONEDATAFS_JUPYTER_VERSION) \
+# 		-e CONDA_BUILD_OPTIONS="$(CONDA_BUILD_OPTIONS)" \
+# 		-e FSONEDATAFS_VERSION=$(FSONEDATAFS_VERSION)
 
 
 codetag-tracker:
