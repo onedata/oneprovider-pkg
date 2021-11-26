@@ -1,4 +1,3 @@
-![Onedata](resources/logo.png)
 This repository contains the necessary code for building Oneprovider packages.
 Oneprovider is part of [Onedata](http://onedata.org) - the global data management system.
 
