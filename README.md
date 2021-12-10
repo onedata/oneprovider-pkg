@@ -9,9 +9,8 @@ The following submodules are used in the repository:
 
 | Submodule | URL      | Description |
 |----------------------|---------------------|-------------------------|
-| **Bamboo scripts** | https://github.com/onedata/bamboos | Bamboos is used for automating test deployments in [bamboo](https://www.atlassian.com/software/bamboo) during Onedata integration tests. |
+| **Bamboo scripts** | https://github.com/onedata/bamboos | Bamboos contains common scripts used in Continuous Integration processes that use the Bamboo platform. |
 | **Cluster Manager** | https://github.com/onedata/cluster-manager | Common Onedata component shared between Onezone and Oneprovider, which monitors and controls Onedata worker processes at site level. |
-| **Cluster Worker** | https://github.com/onedata/cluster-worker | Common Onedata worker process implementation, shared between Onezone and Oneprovider. |
 | **Oneprovider worker** | https://github.com/onedata/op-worker | Main Oneprovider functional component, based on the **Cluster Worker** framework. |
 | **Onepanel** | https://github.com/onedata/onepanel | The Web GUI component |
 

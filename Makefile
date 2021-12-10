@@ -193,7 +193,7 @@ test_profiling:
 ##
 
 clean_all: clean_op_worker clean_onepanel clean_cluster_manager \
-           clean_cluster_worker clean_packages
+           clean_packages
 
 clean_onepanel:
 	$(call clean, onepanel)
@@ -207,13 +207,10 @@ clean_op_worker:
 clean_cluster_manager:
 	$(call clean, cluster_manager)
 
-clean_cluster_worker:
-	$(call clean, cluster_worker)
-
 clean_packages:
 	rm -rf oneprovider_meta/oneprovider.spec \
 		oneprovider_meta/oneprovider/DEBIAN/control \
-		oneprovider_meta/package package oneclient_package_tmp
+		oneprovider_meta/package package 
 
 ##
 ## RPM packaging
@@ -263,7 +260,7 @@ rpmdirs:
 ## DEB packaging
 ##
 
-deb: deb_oneprovider deb_oneclient
+deb: deb_oneprovider
 
 deb_oneprovider: deb_op_panel deb_op_worker deb_cluster_manager
 	cp -f oneprovider_meta/oneprovider/DEBIAN/control.template oneprovider_meta/oneprovider/DEBIAN/control
@@ -340,4 +337,4 @@ docker-dev:
                       --publish --remove docker
 
 codetag-tracker:
-	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package,oneclient,fs-onedatafs
+	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package
