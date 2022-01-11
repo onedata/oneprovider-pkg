@@ -152,41 +152,8 @@ BROWSER             ?= Chrome
 RECORDING_OPTION    ?= failed
 
 
-test_env_up:
-	${TEST_RUN} --test-type env_up -vvv --test-dir tests/env_up
-
 test_provider_packaging test_packaging:
 	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneprovider" -vvv --test-dir tests/packaging -s)
-
-test:
-	${TEST_RUN} --test-type acceptance -vvv --test-dir tests/acceptance/scenarios/${SUITE}.py
-
-test_performance:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance
-
-test_performance_dd:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance -k test_dd
-
-test_performance_sysbench:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance -k sysbench
-
-test_performance_files_creation:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance -k test_files_creation
-
-test_performance_concurrent_files_creation:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance -k concurrent_files_creation
-
-test_performance_transfer_onf:
-	${TEST_RUN} -s --test-type performance -vvv --test-dir tests/performance -k transfer_onf
-
-test_gui_env_up:
-	${TEST_RUN} --test-type gui -vvv --test-dir tests/gui/scenarios/${SUITE}.py -i onedata/acceptance_gui:v3 --driver=${BROWSER} --basetemp=./tests/gui/tmp_files --showlocals --xvfb --xvfb-recording=${RECORDING_OPTION}
-
-test_acceptance_mixed:
-	${TEST_RUN} --test-type mixed -vvv --test-dir tests/mixed/scenarios/${SUITE}.py -i onedata/acceptance_mixed:v3 --driver=Chrome --xvfb --xvfb-recording=failed
-
-test_profiling:
-	${TEST_RUN} --test-type acceptance -vvv --test-dir tests/acceptance/profiling
 
 ##
 ## Clean
