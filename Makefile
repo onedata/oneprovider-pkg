@@ -163,16 +163,16 @@ clean_all: clean_op_worker clean_onepanel clean_cluster_manager \
            clean_packages
 
 clean_onepanel:
-	$(call clean, onepanel)
+	$(call retry, $(call clean, onepanel))
 
 clean_oz_worker:
-	$(call clean, oz_worker)
+	$(call retry, $(call clean, oz_worker))
 
 clean_op_worker:
-	$(call clean, op_worker)
+	$(call retry, $(call clean, op_worker))
 
 clean_cluster_manager:
-	$(call clean, cluster_manager)
+	$(call retry, $(call clean, cluster_manager))
 
 clean_packages:
 	rm -rf oneprovider_meta/oneprovider.spec \
