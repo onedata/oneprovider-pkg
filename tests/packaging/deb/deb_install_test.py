@@ -76,37 +76,6 @@ def onezone(request):
 
     return Onezone(result['oz_worker_nodes'], dockers)
 
-
-@pytest.fixture(scope='module',
-                params=['xenial', 'bionic', 'focal'])
-def oneclient(request, setup_command):
-    distribution = Distribution(request, privileged=True)
-    command = setup_command.format(dist=distribution.name,
-                                   release=distribution.release)
-
-    assert 0 == docker.exec_(distribution.container,
-                             interactive=True,
-                             tty=True,
-                             command=command)
-
-    return distribution
-
-
-@pytest.fixture(scope='module',
-                params=['bionic'])
-def oneclient_base(request, setup_command):
-    distribution = Distribution(request, privileged=True)
-    command = setup_command.format(dist=distribution.name,
-                                   release=distribution.release)
-
-    assert 0 == docker.exec_(distribution.container,
-                             interactive=True,
-                             tty=True,
-                             command=command)
-
-    return distribution
-
-
 @pytest.fixture(scope='module',
                 params=['bionic'])
 def oneprovider(request, onezone, setup_command):
@@ -136,7 +105,6 @@ def oneprovider(request, onezone, setup_command):
 
     return distribution
 
-
 def get_registration_token(distribution, onezone_domain):
     uri = '/api/v3/onezone/user/clusters/provider_registration_token/'
     cmd = 'curl -Ss -k -X POST -u provideradmin:password https://{}{}'.format(
@@ -144,28 +112,6 @@ def get_registration_token(distribution, onezone_domain):
     output = docker.exec_(distribution.container, interactive=True,
                           tty=True, output=True, command=cmd).strip()
     return json.loads(output)['token']
-
-def test_oneclient_base_installation(oneclient_base):
-    assert 0 == docker.exec_(oneclient_base.container,
-                             interactive=True,
-                             tty=True,
-                             command='python /root/data/install_oneclient_base.py {}'
-                                     .format(oneclient_base.name))
-
-def test_fsonedatafs_installation(oneclient_base):
-    assert 0 == docker.exec_(oneclient_base.container,
-                             interactive=True,
-                             tty=True,
-                             command='python /root/data/install_fsonedatafs.py {}'
-                                     .format(oneclient_base.name))
-
-def test_oneclient_installation(oneclient):
-    assert 0 == docker.exec_(oneclient.container,
-                             interactive=True,
-                             tty=True,
-                             command='python /root/data/install_oneclient.py {}'
-                                      .format(oneclient.name))
-
 
 def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
