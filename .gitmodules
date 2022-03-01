@@ -10,6 +10,3 @@
 [submodule "cluster_manager"]
 	path = cluster_manager
 	url = ../cluster-manager
-[submodule "cluster_worker"]
-	path = cluster_worker
-	url = ../cluster-worker
