@@ -12,6 +12,10 @@ CHANGELOG
     there is more entries to be listed, the operation returns a
     'nextPageToken' that can be used to list the subsequent page of
     results.
+-   **VFS-8939** Fixed a bug related to path caveats in access tokens,
+    where a Oneclient user would see the names of newly created
+    files/directories outside of the allowed paths (but was not able to
+    access them).
 -   **VFS-8887** Web GUI: fixed showing file information modal in
     shares.
 -   **VFS-8845** Added QoS transfer statistics collection with their
@@ -37,7 +41,6 @@ CHANGELOG
     option to resolve symbolic links (e.g. during an archive creation or
     directory download) only applies to symbolic links \*\*pointing to
     paths outside of the dataset/directory\*\*.
--   **VFS-8658** Rename "localceph" storage to "embeded ceph".
 -   **VFS-8616** Added monitoring of statuses of Kubernetes pods that
     are deployed during workflow execution using the OpenFaaS platform.
     Monitoring is performed by the k8s-events-monitor component and
