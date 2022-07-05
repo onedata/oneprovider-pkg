@@ -30,11 +30,11 @@ CHANGELOG
 
 ### 20.02.15
 
--   **VFS-8630** *(Onezone)* Added support for displaying optional Terms
+-   **VFS-8630** Added support for displaying optional Terms
     of Use document.
--   **VFS-8482** *(Onezone)* Added dedicated page for privacy policy
+-   **VFS-8482** Added dedicated page for privacy policy
     content.
--   **VFS-8326** *(Onezone)* Web GUI: added service name and domain
+-   **VFS-8326** Web GUI: added service name and domain
     information on control panel login screen.
 
 ### 20.02.14
