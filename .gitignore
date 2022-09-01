@@ -13,7 +13,7 @@ docker-build-list.json
 docker-build-report.txt
 oneprovider_meta/package
 oneprovider_meta/oneprovider.spec
-oneprovider_meta/onezone/DEBIAN/control
+oneprovider_meta/oneprovider/DEBIAN/control
 
 # OSX
 .DS_Store
