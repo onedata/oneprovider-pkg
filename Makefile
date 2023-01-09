@@ -33,7 +33,7 @@ OP_WORKER_VERSION             := $(shell echo ${OP_WORKER_VERSION} | tr - .)
 OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
-PKG_BUILDER_VERSION     ?= -3
+PKG_BUILDER_VERSION     ?= -4
 
 ifdef IGNORE_XFAIL
 TEST_RUN := ./test_run.py --ignore-xfail
