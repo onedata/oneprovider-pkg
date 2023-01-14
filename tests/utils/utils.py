@@ -96,9 +96,9 @@ def retry_running_cmd_until(cmd, retries=0):
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except Exception as e:
-        print """{0}
+        print("""{0}
 Number of retries left: {1}
-""".format(e, retries)
+""".format(e, retries))
 
         if retries > 0:
             time.sleep(1)

@@ -67,8 +67,7 @@ def onezone(request):
                 config_path, self.node)
             self.dockers = dockers
 
-    result = env.up(tests.utils.path_utils.config_file('env.json'),
-                    image='onedata/worker:{}-4'.format(release,))
+    result = env.up(tests.utils.path_utils.config_file('env.json'))
     dockers = result['docker_ids']
 
     request.addfinalizer(lambda: docker.remove(
@@ -77,7 +76,7 @@ def onezone(request):
     return Onezone(result['oz_worker_nodes'], dockers)
 
 @pytest.fixture(scope='module',
-                params=['bionic'])
+                params=['focal'])
 def oneprovider(request, onezone, setup_command):
     onezone_node = onezone.domain
     # onezone_node is in format node.oz.1234.test, resolve domain (oz.1234.test)

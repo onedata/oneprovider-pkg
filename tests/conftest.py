@@ -69,7 +69,7 @@ def remove_symlinks(dirpath):
         for filename in filenames:
             path = os.path.join(root, filename)
             if os.path.islink(path):
-                print 'removing symlink from report: {}'.format(path)
+                print('removing symlink from report: {}'.format(path))
                 os.remove(path)
 
 @pytest.fixture(scope="module")
