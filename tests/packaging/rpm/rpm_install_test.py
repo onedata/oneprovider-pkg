@@ -74,8 +74,7 @@ def onezone(request):
                 config_path, self.node)
             self.dockers = dockers
 
-    result = env.up(tests.utils.path_utils.config_file('env.json'),
-                    image='onedata/worker:{}-4'.format(release,))
+    result = env.up(tests.utils.path_utils.config_file('env.json'))
     dockers = result['docker_ids']
 
     request.addfinalizer(lambda: docker.remove(
