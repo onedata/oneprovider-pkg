@@ -73,7 +73,7 @@ with open('/root/data/config.yml', 'r') as f:
         r = requests.get('https://127.0.0.1:9443' + loc,
                          auth=(EMERGENCY_USERNAME, EMERGENCY_PASSPHRASE),
                          verify=False)
-        print(r.text)
+        print((r.text))
         assert r.status_code == 200
         status = json.loads(r.text)['status']
         time.sleep(5)

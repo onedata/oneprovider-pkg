@@ -69,7 +69,7 @@ def remove_symlinks(dirpath):
         for filename in filenames:
             path = os.path.join(root, filename)
             if os.path.islink(path):
-                print('removing symlink from report: {}'.format(path))
+                print(('removing symlink from report: {}'.format(path)))
                 os.remove(path)
 
 @pytest.fixture(scope="module")
@@ -117,9 +117,9 @@ def persistent_environment(request, env_description_abs_path):
 @pytest.fixture()
 def onedata_environment(persistent_environment, request):
     def fin():
-        if 'posix' in persistent_environment['storages'].keys():
+        if 'posix' in list(persistent_environment['storages'].keys()):
             for storage_name, storage in \
-                    persistent_environment['storages']['posix'].items():
+                    list(persistent_environment['storages']['posix'].items()):
                 clear_storage(storage['host_path'])
 
     request.addfinalizer(fin)
@@ -146,7 +146,7 @@ def providers(persistent_environment, request):
         op_hostname = hostname(op_worker_node)
         op_domain = get_domain(op_hostname)
         provider_id = op_domain.split('.')[0]
-        if provider_id not in providers.keys():
+        if provider_id not in list(providers.keys()):
             new_provider = Provider(provider_id, op_domain, oz_domain)
             providers[provider_id] = new_provider
 
@@ -248,7 +248,7 @@ class Context:
         return [self.get_user(user_name) for user_name in user_names]
 
     def has_user(self, user_name):
-        return user_name in self.users.keys()
+        return user_name in list(self.users.keys())
 
     def get_client(self, user, client_node):
         return self.users[user].get_client(client_node)

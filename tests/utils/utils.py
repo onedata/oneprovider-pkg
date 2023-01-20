@@ -96,9 +96,9 @@ def retry_running_cmd_until(cmd, retries=0):
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except Exception as e:
-        print("""{0}
+        print(("""{0}
 Number of retries left: {1}
-""".format(e, retries))
+""".format(e, retries)))
 
         if retries > 0:
             time.sleep(1)
@@ -165,7 +165,7 @@ def get_cookie(config_path, name, domain, node_name=True):
         domain_name = name.split(".")[0]
     config = parse_json_config_file(config_path)
     cm_config = config[domain][domain_name]['cluster_manager']
-    key = cm_config.keys()[0]
+    key = list(cm_config.keys())[0]
     return str(cm_config[key]['vm.args']['setcookie'])
 
 
