@@ -34,10 +34,10 @@ VOLUME ["/volumes/storage"]
 # Backup files from persistence, as the persistent volume will be overwritten
 # by mounting it from host. The missing files will be copied back in entrypoint.
 ADD persistence-dir.py /root/persistence-dir.py
-RUN python /root/persistence-dir.py --backup-persistent-files
+RUN python3 /root/persistence-dir.py --backup-persistent-files
 
 # Create symlinks to persistence
-RUN python /root/persistence-dir.py --create-symlinks
+RUN python3 /root/persistence-dir.py --create-symlinks
 
 # Add entrypoint scripts
 ADD oneprovider.sh /root/oneprovider.sh
