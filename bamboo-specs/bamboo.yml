@@ -1,0 +1,474 @@
+---
+version: 2
+plan:
+  project-key: ODSRV
+  key: OPRPM
+  name: Oneprovider packages
+  description: Distribution files of oneprovider packages and dockers
+stages:
+- Build:
+    description: Build packages
+    manual: false
+    final: false
+    jobs:
+    - Build oneprovider Focal
+    - Build oneprovider CentOS 7
+    - Codetag Tracker
+- Test:
+    description: Test created packages
+    manual: false
+    final: false
+    jobs:
+    - Test provider packages
+- Publish packages:
+    manual: false
+    final: false
+    jobs:
+    - Publish packages
+- Publish dockers:
+    manual: false
+    final: false
+    jobs:
+    - Publish dockers
+Build oneprovider Focal:
+  key: BOB
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+
+        make submodules
+      description: Initialize submodules
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        RELEASE=$(cat RELEASE)
+
+        if [ "${RELEASE}x" = "1802x" ]; then
+            echo "##############################################"
+            echo "Release 1802 doesn't support Focal - skipping"
+            echo "##############################################"
+            mkdir -p package
+            exit 0
+        fi
+
+        DISTRIBUTION=focal \
+        ONECLIENT_VERSION=$bamboo_ONECLIENT_VERSION \
+        ONEPROVIDER_VERSION=$bamboo_ONEPROVIDER_VERSION \
+        CLUSTER_MANAGER_VERSION=$bamboo_CLUSTER_MANAGER_VERSION \
+        OP_WORKER_VERSION=$bamboo_OP_WORKER_VERSION \
+        OP_PANEL_VERSION=$bamboo_OP_PANEL_VERSION \
+        make deb_oneprovider
+      description: Build DEB
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - tar -chzf focal.tar.gz package
+      description: Package
+  final-tasks:
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  artifacts:
+  - name: focal.tar.gz
+    pattern: focal.tar.gz
+    shared: true
+    required: false
+  requirements:
+  - system.docker.executable
+  - onedata
+  - onedata-pkg-builder
+  artifact-subscriptions: []
+Build oneprovider CentOS 7:
+  key: RPM
+  description: Create RPM packages
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+
+        make submodules
+      description: Initialize submodules
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - "export DISTRIBUTION=centos-7-x86_64 \nexport ONECLIENT_VERSION=$bamboo_ONECLIENT_VERSION \nexport ONEPROVIDER_VERSION=$bamboo_ONEPROVIDER_VERSION \nexport CLUSTER_MANAGER_VERSION=$bamboo_CLUSTER_MANAGER_VERSION \nexport OP_WORKER_VERSION=$bamboo_OP_WORKER_VERSION \nexport OP_PANEL_VERSION=$bamboo_OP_PANEL_VERSION \nexport RETRIES=3\nmake rpm_oneprovider"
+      description: Build RPM
+  - script:
+      interpreter: SHELL
+      scripts:
+      - df -h
+      description: Disk free
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - tar -chzf centos7.tar.gz package
+      description: Package
+  final-tasks:
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  artifacts:
+  - name: centos7.tar.gz
+    pattern: centos7.tar.gz
+    shared: true
+    required: false
+  - name: op-worker-build.log
+    location: ./op_worker/package/packages
+    pattern: build.log
+    shared: true
+    required: false
+  - name: onepanel-build.log
+    location: ./onepanel/package/packages/
+    pattern: build.log
+    shared: true
+    required: false
+  - name: cluster_manager-build.log
+    location: ./cluster_manager/package/packages/
+    pattern: build.log
+    shared: true
+    required: false
+  requirements:
+  - system.docker.executable
+  - onedata
+  - onedata-pkg-builder
+  artifact-subscriptions: []
+Codetag Tracker:
+  key: CT
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+
+        make submodules
+      description: Initialize submodules
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - make codetag-tracker BRANCH=${bamboo.planRepository.branchName}
+      description: Codetag Tracker
+  final-tasks:
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  requirements:
+  - system.docker.executable
+  - onedata
+  - onedata-pkg-builder
+  artifact-subscriptions: []
+Test provider packages:
+  key: TEST
+  description: Test created packages
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+
+        make submodule=bamboos submodules
+      description: Init submodules
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
+            --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan cluster-manager \
+            --artifact-name cluster_manager.tar.gz
+      description: Download cluster_manager artifact
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
+            --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan oz-worker \
+            --artifact-name oz_worker.tar.gz
+      description: Download oz_worker artifact
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        tar -xzf focal.tar.gz
+        tar -xzf centos7.tar.gz
+
+        make artifact_cluster_manager artifact_oz_worker
+      description: Unpack package artifacts
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - RETRIES=3 make test_provider_packaging
+      description: Test
+  final-tasks:
+  - test-parser:
+      type: junit
+      ignore-time: 'false'
+      test-results: test-reports/results.xml
+      description: Parse test results
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  requirements:
+  - onedata
+  artifact-subscriptions:
+  - artifact: centos7.tar.gz
+  - artifact: focal.tar.gz
+Publish packages:
+  key: PD
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        set -e
+
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+        make submodule=bamboos submodules
+
+        # Check if the repo contains RELEASE file containing major Onedata release tag (e.g. 1802)
+        # If not publish to legacy repositories
+        if test -f RELEASE; then
+            RELEASE=$(cat RELEASE)
+            ./pkg.py --host docker_packages_devel --release $RELEASE push centos7.tar.gz
+            mv pkg-list.json centos7-pkg-list.json
+            if [ $RELEASE -ge 1902 ]; then
+                # 1802 doesn't support focal
+                ./pkg.py --host docker_packages_devel --release $RELEASE push focal.tar.gz
+                mv pkg-list.json focal-pkg-list.json
+            fi
+        else
+            ./pkg.py --host docker_packages_devel push xenial.tar.gz
+            mv pkg-list.json xenial-pkg-list.json
+            ./pkg.py --host docker_packages_devel push centos7.tar.gz
+            mv pkg-list.json centos7-pkg-list.json
+        fi
+      description: Publish
+  final-tasks:
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  artifacts:
+  - name: centos7-pkg-list.json
+    pattern: centos7-pkg-list.json
+    shared: true
+    required: false
+  - name: focal-pkg-list.json
+    pattern: focal-pkg-list.json
+    shared: true
+    required: false
+  requirements:
+  - publish_packages
+  - onedata-quick
+  artifact-subscriptions:
+  - artifact: centos7.tar.gz
+  - artifact: focal.tar.gz
+Publish dockers:
+  key: BD
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'false'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+        # initialize submodules to get default packages versions
+        make submodules
+
+        ONECLIENT_VERSION=$bamboo_ONECLIENT_VERSION \
+        ONEPROVIDER_VERSION=$bamboo_ONEPROVIDER_VERSION \
+        CLUSTER_MANAGER_VERSION=$bamboo_CLUSTER_MANAGER_VERSION \
+        OP_WORKER_VERSION=$bamboo_OP_WORKER_VERSION \
+        OP_PANEL_VERSION=$bamboo_OP_PANEL_VERSION \
+        make docker
+      description: +Publish
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        mkdir oneprovider_images
+        cp docker-dev-build-list.json oneprovider_images/
+        cp docker-build-list.json oneprovider_images/
+        tar -czf ${bamboo.planRepository.name}.tar.gz oneprovider_images/
+      description: Package
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        ./bamboos/artifacts/push_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
+            --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan ${bamboo.planRepository.name} \
+            --source-file-path ${bamboo.planRepository.name}.tar.gz
+      description: Push artifact
+  final-tasks:
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - curl ${bamboo.OnedataFinalTasksURL} | bash -
+      description: Clear env
+  artifacts:
+  - name: op-docker-build-report.txt
+    pattern: docker-build-report.txt
+    shared: false
+    required: false
+  - name: op-docker-build-list.json
+    pattern: docker-build-list.json
+    shared: true
+    required: false
+  - name: oc-docker-build-report.txt
+    location: oneclient
+    pattern: docker-build-report.txt
+    shared: false
+    required: false
+  - name: oc-docker-build-list.json
+    location: oneclient
+    pattern: docker-build-list.json
+    shared: true
+    required: false
+  - name: docker-dev-build-list.json
+    pattern: docker-dev-build-list.json
+    shared: true
+    required: false
+  - name: docker-dev-build-report.txt
+    pattern: docker-dev-build-report.txt
+    shared: false
+    required: false
+  requirements:
+  - onedata
+  artifact-subscriptions: []
+# variables:
+#   CLUSTER_MANAGER_VERSION: ''
+#   ONECLIENT_VERSION: ''
+#   ONEPROVIDER_VERSION: ''
+#   OP_PANEL_VERSION: ''
+#   OP_WORKER_VERSION: ''
+repositories:
+- oneprovider-pkg:
+    scope: global
+branches:
+  create:
+    for-new-branch: release/.*
+  delete:
+    after-deleted-days: 7
+    after-inactive-days: 30
+  link-to-jira: true
+notifications: []
+labels: []
+dependencies:
+  require-all-stages-passing: false
+  enabled-for-branches: true
+  block-strategy: none
+  plans:
+  - ODSRV-K8SD
+  - ODSRV-MAOPT
+  - ODSRV-UP
+  - ODSRV-OAP
+  - ODSRV-GAPT
+other:
+  concurrent-build-plugin: system-default
+  all-other-apps:
+    custom.com.atlassian.bamboo.plugin.hungbuildkiller.stopped.enabled: 'true'
+---
+version: 2
+plan:
+  key: ODSRV-OPRPM
+plan-permissions:
+- groups:
+  - plggveildev
+  permissions:
+  - view
+  - edit
+  - build
+  - clone
+  - admin
+- users:
+  - plgcwiertni
+  permissions:
+  - view
+  - build
+...
