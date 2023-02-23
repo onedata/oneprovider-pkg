@@ -35,8 +35,8 @@ check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/xenial/pool/main/c'
                     '/couchbase-server-community/'
                     'couchbase-server-community_4.5.1-ubuntu14.04_amd64.deb'])
 
-check_call(['wget', 'http://archive.ubuntu.com/ubuntu/pool/main/o/openssl1.0'
-                    '/libssl1.0.0_1.0.2n-1ubuntu5_amd64.deb'])
+check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/2102/pool/main/o/openssl1.0'
+                    '/libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'])
 
 # Inject Overlay config to accept test CA certificate
 check_call(['mkdir', '/etc/op_panel'])
@@ -46,7 +46,6 @@ check_call(['cp', '/root/data/overlay.config', '/etc/op_panel/overlay.config'])
 check_call(['sh', '-c', 'apt install -f -y '
             './libssl1.0.0_1.0.2n-1ubuntu5_amd64.deb'
             ], stderr=STDOUT)
-print("===============debuging===================")
 check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             'tzdata'
             ], stderr=STDOUT)
@@ -93,7 +92,7 @@ with open('/root/data/config.yml', 'r') as f:
         r = requests.get('https://127.0.0.1:9443' + loc,
                          auth=(EMERGENCY_USERNAME, EMERGENCY_PASSPHRASE),
                          verify=False)
-        print((r.text))
+        print(r.text)
         assert r.status_code == 200
         status = json.loads(r.text)['status']
         time.sleep(5)
