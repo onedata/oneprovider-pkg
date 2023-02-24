@@ -52,7 +52,7 @@ check_call(['yum', '-y', 'install', '--enablerepo=onedata',
 # Remove glusterfs libs comming from onedata2102 repo
 # After publishing stable 21.02 the libs should be removed from repo 
 # as well as the erasing check_call here
-# FIXME: Remove after publishing stable relesae 21.02
+# TODO VFS-10570 Remove after publishing stable release 21.02
 check_call(['yum', '-y', 'erase', 'onedata2102-glusterfs-libs', 'onedata2102-glusterfs', 'onedata2102-glusterfs-client-xlators', 'onedata2102-glusterfs-api'])
 
 # validate packages installation
