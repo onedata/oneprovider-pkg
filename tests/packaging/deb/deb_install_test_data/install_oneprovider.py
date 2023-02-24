@@ -44,7 +44,7 @@ check_call(['cp', '/root/data/overlay.config', '/etc/op_panel/overlay.config'])
 
 # install packages
 check_call(['sh', '-c', 'apt install -f -y '
-            './libssl1.0.0_1.0.2n-1ubuntu5_amd64.deb'
+            './libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'
             ], stderr=STDOUT)
 check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             'tzdata'
