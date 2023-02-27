@@ -4,6 +4,14 @@ Release notes for project oneprovider-pkg
 CHANGELOG
 ---------
 
+### 20.02.20
+
+-   **VFS-10540** Ported rtransfer fixes with better error recovery and
+    handling from develop to stable branch 20.02.
+-   **VFS-9795** Web GUI: Fixed user logout from Onezone GUI after
+    remove from cluster members.
+-   **VFS-7863** Web GUI: Fixed file download in iOS Safari.
+
 ### 20.02.19
 
 -   **VFS-9926** Web GUI: Opening Oneprovider view in Onezone GUI when
