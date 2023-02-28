@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 import requests
 import sys
@@ -10,28 +12,31 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 EMERGENCY_USERNAME = 'onepanel'
 EMERGENCY_PASSPHRASE = 'passphrase'
 
-dist = sys.argv[1]
+dist = sys.argv[1].encode()
 
 # get packages
 packages = check_output(['ls', '/root/pkg']).split()
 packages = sorted(packages, reverse=True)
 op_panel_package = \
-    [path for path in packages if path.startswith('op-panel')
-                                  and (dist in path)][0]
+    [path for path in packages if path.decode().startswith('op-panel')
+                                  and (dist in path)][0].decode()
 cluster_manager_package = \
-    [path for path in packages if path.startswith('cluster-manager')
-                                  and (dist in path)][0]
+    [path for path in packages if path.decode().startswith('cluster-manager')
+                                  and (dist in path)][0].decode()
 op_worker_package = \
-    [path for path in packages if path.startswith('op-worker')
-                                  and (dist in path)][0]
+    [path for path in packages if path.decode().startswith('op-worker')
+                                  and (dist in path)][0].decode()
 oneprovider_package = [path for path in packages
-                       if path.startswith('oneprovider')
-                          and (dist in path)][0]
+                       if path.decode().startswith('oneprovider')
+                          and (dist in path)][0].decode()
 
 # get couchbase
 check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/xenial/pool/main/c'
                     '/couchbase-server-community/'
                     'couchbase-server-community_4.5.1-ubuntu14.04_amd64.deb'])
+
+check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/2102/pool/main/o/openssl1.0'
+                    '/libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'])
 
 # Inject Overlay config to accept test CA certificate
 check_call(['mkdir', '/etc/op_panel'])
@@ -39,18 +44,25 @@ check_call(['cp', '/root/data/overlay.config', '/etc/op_panel/overlay.config'])
 
 # install packages
 check_call(['sh', '-c', 'apt install -f -y '
+            './libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'
+            ], stderr=STDOUT)
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
+            'tzdata'
+            ], stderr=STDOUT)
+
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             './couchbase-server-community_4.5.1-ubuntu14.04_amd64.deb'
             ], stderr=STDOUT)
-check_call(['sh', '-c', 'apt install -f -y '
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.format(package=op_panel_package)
             ], stderr=STDOUT)
-check_call(['sh', '-c', 'apt install -f -y '
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.format(package=cluster_manager_package)
             ], stderr=STDOUT)
-check_call(['sh', '-c', 'apt install -f -y '
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.format(package=op_worker_package)
             ], stderr=STDOUT)
-check_call(['sh', '-c', 'apt install -f -y '
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.
             format(package=oneprovider_package)], stderr=STDOUT)
 

@@ -23,7 +23,7 @@ def run_cmd(user, client, cmd, detach=False, output=False, error=False):
     redirected to stdout
     """
     # convert command into ascii string or list of ascii strings
-    if isinstance(cmd, basestring):
+    if isinstance(cmd, str):
         cmd = str(cmd)
     elif isinstance(cmd, list):
         cmd = [str(x) for x in cmd]

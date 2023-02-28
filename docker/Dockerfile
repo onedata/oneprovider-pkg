@@ -5,7 +5,7 @@ MAINTAINER Krzysztof Trzepla <krzysztof.trzepla@gmail.com>
 # Build arguments
 ARG RELEASE
 ARG RELEASE_TYPE
-ARG DISTRIBUTION=bionic
+ARG DISTRIBUTION=focal
 ARG OP_PANEL_VERSION
 ARG CLUSTER_MANAGER_VERSION
 ARG OP_WORKER_VERSION
@@ -31,13 +31,16 @@ RUN case ${RELEASE_TYPE} in \
 RUN mkdir -p /volumes/storage
 VOLUME ["/volumes/storage"]
 
+RUN pip3 install pyYAML
+RUN apt install -y python-is-python2
+
 # Backup files from persistence, as the persistent volume will be overwritten
 # by mounting it from host. The missing files will be copied back in entrypoint.
 ADD persistence-dir.py /root/persistence-dir.py
-RUN python /root/persistence-dir.py --backup-persistent-files
+RUN python3 /root/persistence-dir.py --backup-persistent-files
 
 # Create symlinks to persistence
-RUN python /root/persistence-dir.py --create-symlinks
+RUN python3 /root/persistence-dir.py --create-symlinks
 
 # Add entrypoint scripts
 ADD oneprovider.sh /root/oneprovider.sh

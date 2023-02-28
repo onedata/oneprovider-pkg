@@ -49,6 +49,12 @@ check_call(['yum', '-y', 'install', '--enablerepo=onedata',
 check_call(['yum', '-y', 'install', '--enablerepo=onedata',
             '/root/pkg/' + oneprovider_package], stderr=STDOUT)
 
+# Remove glusterfs libs comming from onedata2102 repo
+# After publishing stable 21.02 the libs should be removed from repo 
+# as well as the erasing check_call here
+# TODO VFS-10570 Remove after publishing stable release 21.02
+check_call(['yum', '-y', 'erase', 'onedata2102-glusterfs-libs', 'onedata2102-glusterfs', 'onedata2102-glusterfs-client-xlators', 'onedata2102-glusterfs-api'])
+
 # validate packages installation
 check_call(['service', 'op_panel'.format(release=release), 'status'])
 
@@ -73,7 +79,7 @@ with open('/root/data/config.yml', 'r') as f:
         r = requests.get('https://127.0.0.1:9443' + loc,
                          auth=(EMERGENCY_USERNAME, EMERGENCY_PASSPHRASE),
                          verify=False)
-        print(r.text)
+        print((r.text))
         assert r.status_code == 200
         status = json.loads(r.text)['status']
         time.sleep(5)

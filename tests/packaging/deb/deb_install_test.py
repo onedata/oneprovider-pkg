@@ -67,8 +67,7 @@ def onezone(request):
                 config_path, self.node)
             self.dockers = dockers
 
-    result = env.up(tests.utils.path_utils.config_file('env.json'),
-                    image='onedata/worker:{}-4'.format(release,))
+    result = env.up(tests.utils.path_utils.config_file('env.json'))
     dockers = result['docker_ids']
 
     request.addfinalizer(lambda: docker.remove(
@@ -77,7 +76,7 @@ def onezone(request):
     return Onezone(result['oz_worker_nodes'], dockers)
 
 @pytest.fixture(scope='module',
-                params=['bionic'])
+                params=['focal'])
 def oneprovider(request, onezone, setup_command):
     onezone_node = onezone.domain
     # onezone_node is in format node.oz.1234.test, resolve domain (oz.1234.test)
@@ -91,7 +90,7 @@ def oneprovider(request, onezone, setup_command):
     command = setup_command.format(dist=distribution.name,
                                    release=distribution.release)
     command = '{command} && ' \
-        'apt-get install -y python-pip gnupg2 libssl1.0.0 && ' \
+        'apt-get install -y python3-pip gnupg2 libssl1.1 && ' \
         'pip install requests'.format(command=command)
 
     assert 0 == docker.exec_(distribution.container,
@@ -117,7 +116,7 @@ def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
                              interactive=True,
                              tty=True,
-                             command='python /root/data/install_oneprovider.py {}'
+                             command='python3 /root/data/install_oneprovider.py {}'
                                      .format(oneprovider.name))
     config_file = tests.utils.path_utils.config_file('config.yml')
     tests.packaging.oneprovider_common.reset_token_in_config(config_file)
