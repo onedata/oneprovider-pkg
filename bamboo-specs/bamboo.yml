@@ -200,10 +200,7 @@ Codetag Tracker:
       scripts:
       - curl ${bamboo.OnedataFinalTasksURL} | bash -
       description: Clear env
-  requirements:
-  - system.docker.executable
-  - onedata
-  - onedata-pkg-builder
+  requirements: []
   artifact-subscriptions: []
 Test provider packages:
   key: TEST
