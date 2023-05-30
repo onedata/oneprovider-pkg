@@ -17,6 +17,7 @@ DIRS = [
     '/var/log/op_panel',
     '/var/log/op_worker',
     '/var/log/cluster_manager',
+    '/var/log/oneprovider',
     '/opt/couchbase/var/lib/couchbase',
     '/var/lib/ceph',
     '/var/log/ceph'
