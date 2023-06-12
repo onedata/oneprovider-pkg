@@ -6,9 +6,14 @@ CHANGELOG
 
 ### 21.02.2
 
+-   **VFS-10996** Web GUI: Fixed effective protection badges in file
+    dataset panel to be updated after ancestor protection change.
 -   **VFS-10928** Fixed bug in truncate for object storages with random
     write access, which caused not deleting data above the truncate
     threshold within the last object boundary.
+-   **VFS-10875** Web GUI: Improved handling of large amount of spaces
+    and storages in Oneprovider panel GUI. Added loading progress
+    indicators.
 -   **VFS-10825** Web GUI: Fixed unnecessary scrollbars in Safari.
 -   **VFS-10824** Web GUI: Fixed file browser crash when entering share
     root using breadcrumbs.
