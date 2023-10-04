@@ -26,11 +26,16 @@ endif
 ifeq ($(strip $(OP_PANEL_VERSION)),)
 OP_PANEL_VERSION        := $(shell git -C onepanel describe --tags --always --abbrev=7)
 endif
+ifeq ($(strip $(ONES3_VERSION)),)
+ONES3_VERSION        := $(shell git -C oneclient describe --tags --always --abbrev=7)
+endif
+
 
 ONEPROVIDER_VERSION           := $(shell echo ${ONEPROVIDER_VERSION} | tr - .)
 CLUSTER_MANAGER_VERSION       := $(shell echo ${CLUSTER_MANAGER_VERSION} | tr - .)
 OP_WORKER_VERSION             := $(shell echo ${OP_WORKER_VERSION} | tr - .)
 OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
+ONES3_VERSION                 := $(shell echo ${ONES3_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
 PKG_BUILDER_VERSION     ?= -4
@@ -283,6 +288,7 @@ docker: docker-dev
                       --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
                       --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
                       --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
+                      --build-arg ONES3_VERSION=$(ONES3_VERSION) \
                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
                       --name oneprovider \
                       --publish --remove docker
@@ -297,6 +303,7 @@ docker-dev:
                       --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
                       --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
                       --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
+                      --build-arg ONES3_VERSION=$(ONES3_VERSION) \
                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
                       --report docker-dev-build-report.txt \
                       --short-report docker-dev-build-list.json \
