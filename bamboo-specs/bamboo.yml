@@ -351,6 +351,15 @@ Publish dockers:
       description: Checkout Default Repository
   - script:
       interpreter: BINSH_OR_CMDEXE
+      description: Update submodules
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
+        # initialize submodules to get default packages versions
+        make submodules
+  - script:
+      interpreter: BINSH_OR_CMDEXE
       description: Wait for ones3 package
       scripts:
       - |-
@@ -373,11 +382,6 @@ Publish dockers:
       interpreter: BINSH_OR_CMDEXE
       scripts:
       - |-
-        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
-        git remote -v
-        # initialize submodules to get default packages versions
-        make submodules
-
         ONECLIENT_VERSION=$bamboo_ONECLIENT_VERSION \
         ONEPROVIDER_VERSION=$bamboo_ONEPROVIDER_VERSION \
         CLUSTER_MANAGER_VERSION=$bamboo_CLUSTER_MANAGER_VERSION \
