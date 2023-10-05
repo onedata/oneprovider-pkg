@@ -362,7 +362,7 @@ Publish dockers:
         do
           echo "Waiting for ones3 package at: $ONES3_PACKAGE_URL - retries left: $REPEATS"
           sleep 60
-          let REPEATS-=1
+          REPEATS=$((REPEATS-1))
           if [ "$REPEATS" -eq "0" ]; then
             echo "ERROR: Awaiting for ones3 package $ONES3_PACKAGE_URL failed!";
             exit 1;
