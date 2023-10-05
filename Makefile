@@ -97,6 +97,7 @@ print_package_versions:
 	@echo "cluster-manager:\t" $(CLUSTER_MANAGER_VERSION)
 	@echo "op-worker:\t\t" $(OP_WORKER_VERSION)
 	@echo "op-panel:\t\t" $(OP_PANEL_VERSION)
+	@echo "oneclient:\t\t" $(ONES3_VERSION)
 
 ##
 ## Submodules
