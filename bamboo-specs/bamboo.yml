@@ -351,13 +351,37 @@ Publish dockers:
       description: Checkout Default Repository
   - script:
       interpreter: BINSH_OR_CMDEXE
+      description: Update submodules
       scripts:
       - |-
         git remote set-url origin ${bamboo.repository.git.repositoryUrl}
         git remote -v
         # initialize submodules to get default packages versions
         make submodules
-
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      description: Wait for ones3 package
+      scripts:
+      - |-
+        RELEASE=$(cat RELEASE)
+        ONES3_VERSION=$(git -C oneclient describe --tags --always --abbrev=7 | tr - .)
+        ONES3_PACKAGE_URL="http://packages.devel.onedata.org/apt/ubuntu/${RELEASE}/pool/main/o/ones3/ones3_${ONES3_VERSION}-1~focal_amd64.deb"
+        REPEATS=600
+        until curl --silent --output /dev/null --fail --head $ONES3_PACKAGE_URL
+        do
+          echo "Waiting for ones3 package at: $ONES3_PACKAGE_URL - retries left: $REPEATS"
+          sleep 60
+          REPEATS=$((REPEATS-1))
+          if [ "$REPEATS" -eq "0" ]; then
+            echo "ERROR: Awaiting for ones3 package $ONES3_PACKAGE_URL failed!";
+            exit 1;
+          fi
+        done
+        echo "ones3 package $ONES3_PACKAGE_URL is available - continuing..."
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
         ONECLIENT_VERSION=$bamboo_ONECLIENT_VERSION \
         ONEPROVIDER_VERSION=$bamboo_ONEPROVIDER_VERSION \
         CLUSTER_MANAGER_VERSION=$bamboo_CLUSTER_MANAGER_VERSION \
