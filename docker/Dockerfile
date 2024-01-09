@@ -58,6 +58,8 @@ RUN python3 /root/persistence-dir.py --create-symlinks
 # Add scripts handling service starting and stopping
 ADD oneprovider.sh /root/oneprovider.sh
 ADD oneprovider.py /root/oneprovider.py
+ADD demo /usr/local/bin/demo
+ADD setup-demo.sh /root/setup-demo.sh
 ADD oneprovider-stop-graceful.sh /root/oneprovider-stop-graceful.sh
 ADD internal-scripts/oneprovider-do-stop.sh /root/internal-scripts/oneprovider-do-stop.sh
 ADD internal-scripts/oneprovider-ensure-stopped.sh /root/internal-scripts/oneprovider-ensure-stopped.sh

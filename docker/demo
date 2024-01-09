@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec /root/oneprovider.sh demo
