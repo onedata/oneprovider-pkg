@@ -59,7 +59,9 @@ RUN python3 /root/persistence-dir.py --create-symlinks
 ADD oneprovider.sh /root/oneprovider.sh
 ADD oneprovider.py /root/oneprovider.py
 ADD demo /usr/local/bin/demo
+ADD await /usr/local/bin/await
 ADD setup-demo.sh /root/setup-demo.sh
+ADD disable-gui-verification.config /etc/oz_worker/config.d/disable-gui-verification.config
 ADD oneprovider-stop-graceful.sh /root/oneprovider-stop-graceful.sh
 ADD internal-scripts/oneprovider-do-stop.sh /root/internal-scripts/oneprovider-do-stop.sh
 ADD internal-scripts/oneprovider-ensure-stopped.sh /root/internal-scripts/oneprovider-ensure-stopped.sh
