@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IP=$(hostname -i)
-ONEZONE_IP=$1
+export ONEZONE_IP=$1
 read -r -d '' -a OP_RECORDS << EOF
 krakow:50.049683:19.944544
 lisbon:38.736946:-9.142685
@@ -31,6 +31,16 @@ export ONEPANEL_EMERGENCY_PASSPHRASE="password"
 export ONEPANEL_GENERATE_TEST_WEB_CERT="true"  # default: false
 export ONEPANEL_GENERATED_CERT_DOMAIN="oneprovider.local"  # default: ""
 export ONEPANEL_TRUST_TEST_CA="true"  # default: false
+
+if ! await-oz; then
+    echo -e "\e[1;31m"
+    echo "-------------------------------------------------------------------------"
+    echo "Onezone is not started or bad IP is supplied. Giving up!"
+    echo "-------------------------------------------------------------------------"
+    echo -e "\e[0m"
+    kill -9 "$(pgrep -f /root/oneprovider.py)"
+    exit 1
+fi
 
 ADMIN_ID=$(curl -v -k -u "admin:password" https://onezone.local/api/v3/onezone/user | jq -r .userId)
 REG_TOKEN=$(curl -k -v -u admin:password https://onezone.local/api/v3/onezone/user/tokens/temporary \
@@ -97,6 +107,8 @@ export ONEPROVIDER_CONFIG=$(cat <<EOF
           name: "${OP_NAME}"
           adminEmail: "admin@oneprovider.local"
           token: "${REG_TOKEN}"
+          # tokenProvisionMethod: "fromFile"
+          # tokenFile: /root/registration-token.txt
           # Use built-in Let's Encrypt client to obtain and renew certificates
           letsEncryptEnabled: false
           # Automatically register this Oneprovider in Onezone without subdomain delegation
@@ -115,10 +127,11 @@ EOF
 
 # Run an async process to await service readiness
 {
-    if ! await; then
+    if ! await-op; then
         kill -9 "$(pgrep -f /root/oneprovider.py)"
         exit 1
     fi
+    
 
     if ${SUPPORT}; then
 	# Get space-demo id
@@ -148,11 +161,20 @@ EOF
 	     https://${IP}/api/v3/onepanel/provider/spaces\
 	     -d '{"token":"'$SUPPORT_TOKEN'", "size": 10000000000, "storageId": "'$STORAGE_ID'"}'
     fi
-    
-    echo -e "\e[1;32m"
-    echo "-------------------------------------------------------------------------"
-    echo "Oneprovider service is ready!"
-    echo "You can manage the Oneprovider cluster from the Onezone Web GUI"
-    echo "-------------------------------------------------------------------------"
-    echo -e "\e[0m"
+
+    if [ $(curl -k -v https://${IP}/api/v3/onepanel/configuration |\
+	       jq '. | select(.deployed and .isRegistered) | length')0 -gt 0 ]; then
+	echo -e "\e[1;32m"
+	echo "-------------------------------------------------------------------------"
+	echo "Oneprovider service is ready!"
+	echo "You can manage the Oneprovider cluster from the Onezone Web GUI"
+	echo "-------------------------------------------------------------------------"
+	echo -e "\e[0m"
+    else
+	echo -e "\e[1;31m"
+	echo "-------------------------------------------------------------------------"
+	echo "Oneprovider service has not been properly deployed!"
+	echo "-------------------------------------------------------------------------"
+	echo -e "\e[0m"
+    fi
 } &

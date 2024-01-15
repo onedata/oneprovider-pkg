@@ -59,7 +59,8 @@ RUN python3 /root/persistence-dir.py --create-symlinks
 ADD oneprovider.sh /root/oneprovider.sh
 ADD oneprovider.py /root/oneprovider.py
 ADD demo /usr/local/bin/demo
-ADD await /usr/local/bin/await
+ADD await-oz /usr/local/bin/await-oz
+ADD await-op /usr/local/bin/await-op
 ADD setup-demo.sh /root/setup-demo.sh
 ADD oneprovider-stop-graceful.sh /root/oneprovider-stop-graceful.sh
 ADD internal-scripts/oneprovider-do-stop.sh /root/internal-scripts/oneprovider-do-stop.sh
