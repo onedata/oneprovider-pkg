@@ -59,9 +59,19 @@ RUN python3 /root/persistence-dir.py --create-symlinks
 ADD oneprovider.sh /root/oneprovider.sh
 ADD oneprovider.py /root/oneprovider.py
 ADD oneprovider-stop-graceful.sh /root/oneprovider-stop-graceful.sh
+ADD await /usr/local/bin/await
 ADD internal-scripts/oneprovider-do-stop.sh /root/internal-scripts/oneprovider-do-stop.sh
 ADD internal-scripts/oneprovider-ensure-stopped.sh /root/internal-scripts/oneprovider-ensure-stopped.sh
 ADD internal-scripts/common.sh /root/internal-scripts/common.sh
+
+# Add scripts related to demo mode
+ADD demo-mode/demo-common.sh /root/demo-mode/demo-common.sh
+ADD demo-mode/demo /usr/local/bin/demo
+ADD demo-mode/demo-access-token /usr/local/bin/demo-access-token
+ADD demo-mode/setup-demo.sh /root/demo-mode/setup-demo.sh
+ADD demo-mode/await-demo /usr/local/bin/await-demo
+ADD demo-mode/await-demo-onezone /usr/local/bin/await-demo-onezone
+
 
 # Disable http_proxy for normal operation
 ENV http_proxy ""
