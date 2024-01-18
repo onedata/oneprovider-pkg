@@ -1,10 +1,14 @@
 #!/bin/bash
 
+source /root/demo-mode/demo-common.sh
+
+ONEZONE_IP=$(getent hosts onezone.local | awk '{ print $1 }')
+
 # Optional first argument
 TIMEOUT=${1:-300}
 
 RETRY_NUM=0
-while ! curl -k https://${ONEZONE_IP}/nagios &> /dev/null; do
+while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" &> /dev/null; do
     RETRY_NUM=$((RETRY_NUM + 1))
 
     if ! ((RETRY_NUM % 15)); then
@@ -18,7 +22,7 @@ while ! curl -k https://${ONEZONE_IP}/nagios &> /dev/null; do
     if [[ ${RETRY_NUM} -eq ${TIMEOUT} ]]; then
         echo -e "\e[1;31m"
         echo "-------------------------------------------------------------------------"
-        echo "ERROR: The Onezeone service failed to become ready within ${TIMEOUT} seconds, exiting."
+        echo "ERROR: The Onezone service (PROVIDER_IP = ${ONEZONE_IP}) failed to become ready within ${TIMEOUT} seconds, exiting."
         echo "-------------------------------------------------------------------------"
         echo -e "\e[0m"
         exit 1
