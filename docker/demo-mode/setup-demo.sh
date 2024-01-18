@@ -196,11 +196,11 @@ ensure_demo_space() {
 
 get_provider_data() {
     case "${1}" in
-        1) echo "krakow:50.049683:19.944544" ;;
-        2) echo "lisbon:38.736946:-9.142685" ;;
-        3) echo "paris:48.864716:2.349014" ;;
-        4) echo "bari:41.125278:16.866667" ;;
-        *) echo "demo:52.25:21.0" ;;
+        1) echo "Krakow:50.049683:19.944544" ;;
+        2) echo "Lisbon:38.736946:-9.142685" ;;
+        3) echo "Paris:48.864716:2.349014" ;;
+        4) echo "Bari:41.125278:16.866667" ;;
+        *) echo "Demo ${1}:52.25:21.0" ;;
     esac
 }
 
