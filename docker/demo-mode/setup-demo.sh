@@ -3,11 +3,11 @@
 TOKEN_FILE=/root/registration-token.txt
 
 ONEZONE_IP=$1
+PROVIDER_IP=$(hostname -I | tr -d ' ')
 
 source /root/demo-mode/demo-common.sh
 
 main() {
-    PROVIDER_IP=$(hostname -I | tr -d ' ')
     HOSTNAME=$(hostname)
     sed "s/${HOSTNAME}\$/${HOSTNAME}-node.oneprovider.local ${HOSTNAME}-node/g" /etc/hosts > /tmp/hosts.new
     cat /tmp/hosts.new > /etc/hosts
@@ -26,6 +26,7 @@ main() {
     echo "Starting Oneprovider in demo mode..."
     echo "The IP address is: $PROVIDER_IP"
     echo "When the service is ready, an adequate log will appear here."
+    echo "You may also use the await script: \"docker exec \$CONTAINER_ID await-demo\"."
     echo "-------------------------------------------------------------------------"
     echo -e "\e[0m"
 
@@ -168,8 +169,14 @@ EOF
 
         echo -e "\e[1;32m"
         echo "-------------------------------------------------------------------------"
-        echo "Oneprovider service is ready!"
-        echo "You can manage the Oneprovider cluster from the Onezone Web GUI."
+        echo "Demo Oneprovider service is ready! Visit the Onezone GUI in your browser:"
+        echo "  URL:      https://${ONEZONE_IP}"
+        echo "  username: admin"
+        echo "  password: password"
+        echo "  note:     you must add an exception for the untrusted certificate"
+        echo ""
+        echo "From there, you can access the demo space and manage the Oneprovider cluster."
+        echo "To interact with the APIs or mount a Oneclient, use the provider IP: ${PROVIDER_IP}"
         echo "-------------------------------------------------------------------------"
         echo -e "\e[0m"
     } &
