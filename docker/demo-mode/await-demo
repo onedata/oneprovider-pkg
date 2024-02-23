@@ -1,14 +1,15 @@
 #!/bin/bash
 
+source /root/demo-mode/better-curl.sh
+
 # Optional first argument
 TIMEOUT=${1:-300}
 
-await-demo-onezone &> /dev/null
-
+# demo-access-token waits for Onezone internally
 ACCESS_TOKEN=$(demo-access-token)
 
 RETRY_NUM=0
-while ! curl -fk -H "x-auth-token:$ACCESS_TOKEN" -X POST "https://127.0.0.1/api/v3/oneprovider/lookup-file-id/demo-space" &> /dev/null; do
+while ! do_curl -H "x-auth-token:$ACCESS_TOKEN" -X POST "https://127.0.0.1/api/v3/oneprovider/lookup-file-id/demo-space" > /dev/null; do
     RETRY_NUM=$((RETRY_NUM + 1))
 
     if ! ((RETRY_NUM % 15)); then

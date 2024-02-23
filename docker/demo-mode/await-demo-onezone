@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /root/demo-mode/demo-common.sh
+source /root/demo-mode/better-curl.sh
 
 ONEZONE_IP=$(getent hosts onezone.local | awk '{ print $1 }')
 
@@ -8,7 +8,7 @@ ONEZONE_IP=$(getent hosts onezone.local | awk '{ print $1 }')
 TIMEOUT=${1:-300}
 
 RETRY_NUM=0
-while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" &> /dev/null; do
+while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" > /dev/null; do
     RETRY_NUM=$((RETRY_NUM + 1))
 
     if ! ((RETRY_NUM % 15)); then
