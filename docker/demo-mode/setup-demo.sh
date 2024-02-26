@@ -1,11 +1,12 @@
 #!/bin/bash
 
+source /root/demo-mode/demo-common.sh
+source /root/demo-mode/better-curl.sh
+
 TOKEN_FILE=/root/registration-token.txt
 
 ONEZONE_IP=$1
 PROVIDER_IP=$(hostname -I | tr -d ' ')
-
-source /root/demo-mode/demo-common.sh
 
 main() {
     HOSTNAME=$(hostname)
@@ -83,7 +84,9 @@ EOF
 
     # Run all the other procedures in an async process (so the service can already start booting)
     {
-        await-demo-onezone
+        if ! await-demo-onezone > /dev/null; then
+            exit_and_kill_docker
+        fi
 
         ADMIN_ID=$(success_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" | jq -r .userId)
 
@@ -123,7 +126,7 @@ EOF
             sleep 1
             DEMO_SPACE_ID=$(ensure_demo_space)
             if [[ -z "$DEMO_SPACE_ID" ]]; then
-                echo "[ERROR] Cannot resolve the demo space"
+                echo "ERROR: Cannot resolve the demo space"
                 exit_and_kill_docker
             fi
         fi
@@ -143,7 +146,7 @@ EOF
                 "name": "'"${OP_NAME}"'",
                 "geoLatitude": "'"${OP_LATITUDE}"'",
                 "geoLongitude": "'"${OP_LONGITUDE}"'"
-            }' &> /dev/null
+            }' > /dev/null
 
         SUPPORT_TOKEN=$(success_curl -u admin:password \
             "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/temporary" \
@@ -161,7 +164,7 @@ EOF
 
         success_curl "https://${PROVIDER_IP}/api/v3/onepanel/provider/spaces" \
             -H "x-auth-token: $ACCESS_TOKEN" -X POST -H "Content-Type: application/json" \
-            -d '{"token":"'"${SUPPORT_TOKEN}"'", "size": 10737418240, "storageId": "'"${STORAGE_ID}"'"}' &> /dev/null
+            -d '{"token":"'"${SUPPORT_TOKEN}"'", "size": 10737418240, "storageId": "'"${STORAGE_ID}"'"}' > /dev/null
 
         if ! await-demo; then
             exit_and_kill_docker
@@ -189,7 +192,7 @@ ensure_demo_space() {
     # will return an "already exists" error)
     do_curl -k -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/spaces" \
         -H "Content-type: application/json" -X POST \
-        -d '{ "name" : "demo-space", "idGeneratorSeed" : "demo-space" }' &> /dev/null
+        -d '{ "name" : "demo-space", "idGeneratorSeed" : "demo-space" }' > /dev/null
 
     SPACES=$(success_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/spaces" | jq -r '.spaces | join(" ")')
     for SPACE_ID in $SPACES; do
