@@ -14,7 +14,7 @@ while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user
     if ! ((RETRY_NUM % 15)); then
         echo -e "\e[1;33m"
         echo "-------------------------------------------------------------------------"
-        echo "Awaiting Onezone service readiness..."
+        echo "Awaiting Onezone service (${ONEZONE_IP}) readiness..."
         echo "-------------------------------------------------------------------------"
         echo -e "\e[0m"
     fi
