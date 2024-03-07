@@ -81,10 +81,11 @@ main() {
           domainName: "${ONEZONE_IP}"
 EOF
 )
+    # After the main process finishes here, the Oneprovider entrypoint is run.
 
     # Run all the other procedures in an async process (so the service can already start booting)
     {
-        if ! await-demo-onezone > /dev/null; then
+        if ! await-demo-onezone; then
             exit_and_kill_docker
         fi
 
@@ -210,7 +211,7 @@ get_provider_data() {
         2) echo "Lisbon:38.736946:-9.142685" ;;
         3) echo "Paris:48.864716:2.349014" ;;
         4) echo "Bari:41.125278:16.866667" ;;
-        *) echo "Demo ${1}:52.25:21.0" ;;
+        *) echo "Demo ${1}:$((RANDOM % 180 - 90)):$((RANDOM % 360 - 180))" ;;
     esac
 }
 
