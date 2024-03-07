@@ -2,7 +2,7 @@
 
 source /root/demo-mode/better-curl.sh
 
-ONEZONE_IP=$(getent hosts onezone.local | awk '{ print $1 }')
+ONEZONE_IP=$(getent hosts "$ONEZONE_DOMAIN" | awk '{ print $1 }')
 
 # Optional first argument
 TIMEOUT=${1:-300}
@@ -22,7 +22,7 @@ while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user
     if [[ ${RETRY_NUM} -eq ${TIMEOUT} ]]; then
         echo -e "\e[1;31m"
         echo "-------------------------------------------------------------------------"
-        echo "ERROR: The Onezone service (PROVIDER_IP = ${ONEZONE_IP}) failed to become ready within ${TIMEOUT} seconds, exiting."
+        echo "ERROR: The Onezone service at ${ONEZONE_IP} failed to become ready within ${TIMEOUT} seconds, exiting."
         echo "-------------------------------------------------------------------------"
         echo -e "\e[0m"
         exit 1
