@@ -210,7 +210,7 @@ get_provider_data() {
         2) echo "Lisbon:38.736946:-9.142685" ;;
         3) echo "Paris:48.864716:2.349014" ;;
         4) echo "Bari:41.125278:16.866667" ;;
-        *) echo "Demo ${1}:$((RANDOM % 180 - 90)):$((RANDOM % 360 - 180))" ;;
+        *) echo "Demo ${1}:$((RANDOM % 135 - 55)):$((RANDOM % 320 - 150))" ;;
     esac
 }
 
