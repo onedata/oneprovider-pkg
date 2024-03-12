@@ -3,7 +3,7 @@
 source /root/demo-mode/better-curl.sh
 
 # Optional first argument
-TIMEOUT=${1:-300}
+TIMEOUT=${1:-600}
 
 # demo-access-token waits for Onezone internally
 ACCESS_TOKEN=$(demo-access-token)
