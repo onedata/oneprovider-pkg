@@ -5,7 +5,7 @@ source /root/demo-mode/better-curl.sh
 ONEZONE_IP=$(getent hosts "$ONEZONE_DOMAIN" | awk '{ print $1 }')
 
 # Optional first argument
-TIMEOUT=${1:-300}
+TIMEOUT=${1:-600}
 
 RETRY_NUM=0
 while ! do_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" > /dev/null; do
