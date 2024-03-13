@@ -3,25 +3,14 @@
 source /root/demo-mode/demo-common.sh
 source /root/demo-mode/better-curl.sh
 
-TOKEN_FILE=/root/registration-token.txt
+TOKEN_FILE="/root/registration-token.txt"
+POSIX_STORAGE_MOUNT_POINT="/volumes/storage"
 
 ONEZONE_IP=$1
+HOSTNAME=$(hostname)
 PROVIDER_IP=$(hostname -I | tr -d ' ')
 
 main() {
-    HOSTNAME=$(hostname)
-    sed "s/${HOSTNAME}\$/${HOSTNAME}-node.oneprovider.local ${HOSTNAME}-node/g" /etc/hosts > /tmp/hosts.new
-    cat /tmp/hosts.new > /etc/hosts
-    rm /tmp/hosts.new
-    echo "127.0.1.1 ${HOSTNAME}.oneprovider.local ${HOSTNAME}" >> /etc/hosts
-    echo "${ONEZONE_IP} ${ONEZONE_DOMAIN}" >> /etc/hosts
-
-    # all certs in the demo env are self-signed, skip any verification
-    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_panel/config.d/disable-ssl-verification.config
-    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_worker/config.d/disable-ssl-verification.config
-
-    chmod 777 /volumes/storage
-
     echo -e "\e[1;33m"
     echo "-------------------------------------------------------------------------"
     echo "Starting Oneprovider in demo mode..."
@@ -31,6 +20,36 @@ main() {
     echo "-------------------------------------------------------------------------"
     echo -e "\e[0m"
 
+    sed "s/${HOSTNAME}\$/${HOSTNAME}-node.oneprovider.local ${HOSTNAME}-node/g" /etc/hosts > /tmp/hosts.new
+    cat /tmp/hosts.new > /etc/hosts
+    rm /tmp/hosts.new
+    echo "127.0.1.1 ${HOSTNAME}.oneprovider.local ${HOSTNAME}" >> /etc/hosts
+    echo "${ONEZONE_IP} ${ONEZONE_DOMAIN}" >> /etc/hosts
+
+    # A simple heuristic to check if the DNS setup in the current docker runtime is
+    # acceptable; there is a known issue: if DNS lookups about the machine's FQDN
+    # take too long (or time out), couchbase will take ages to start.
+    START_TIME_NANOS=$(date +%s%N)
+    timeout 2 nslookup "$(hostname -f)" > /dev/null
+    LOOKUP_TIME_MILLIS=$((($(date +%s%N) - START_TIME_NANOS) / 1000000))
+    if [ "$LOOKUP_TIME_MILLIS" -gt 1000 ]; then
+        echo "-------------------------------------------------------------------------"
+        echo "The DNS config in your docker runtime may cause problems with the Couchbase DB startup"
+        echo "since queries about the container's FQDN take too long."
+        echo ""
+        echo "Overriding the container's resolv.conf with 8.8.8.8 to avoid that."
+        echo "-------------------------------------------------------------------------"
+        echo ""
+        echo "8.8.8.8" > /etc/resolv.conf
+    fi
+
+    # all certs in the demo env are self-signed, skip any verification
+    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_panel/config.d/disable-ssl-verification.config
+    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_worker/config.d/disable-ssl-verification.config
+
+    chmod 777 "${POSIX_STORAGE_MOUNT_POINT}"
+
+    # Oneprovider batch installation config
     export ONEPANEL_DEBUG_MODE="true" # prevents container exit on configuration error
     export ONEPANEL_BATCH_MODE="true"
     export ONEPANEL_LOG_LEVEL="info" # prints logs to stdout (possible values: none, debug, info, error), by default set to info
@@ -61,7 +80,7 @@ main() {
           storages:
             posix:
               type: "posix"
-              mountPoint: "/volumes/storage"
+              mountPoint: "${POSIX_STORAGE_MOUNT_POINT}"
         oneprovider:
           geoLatitude: 0.0
           geoLongitude: 0.0
@@ -115,9 +134,9 @@ EOF
             fi
         done
 
-        echo "------------------------------"
+        echo "-------------------------------------------------------------------------"
         echo "Registration token: ${REG_TOKEN}"
-        echo "------------------------------"
+        echo "-------------------------------------------------------------------------"
         echo "${REG_TOKEN}" >> "${TOKEN_FILE}"
 
         DEMO_SPACE_ID=$(ensure_demo_space)
