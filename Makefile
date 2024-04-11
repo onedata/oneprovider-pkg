@@ -5,7 +5,7 @@ DOCKER_RELEASE          ?= development
 DOCKER_REG_NAME         ?= "docker.onedata.org"
 DOCKER_REG_USER         ?= ""
 DOCKER_REG_PASSWORD     ?= ""
-PROD_RELEASE_BASE_IMAGE ?= "onedata/oneprovider-common:2102-9"
+PROD_RELEASE_BASE_IMAGE ?= "docker.onedata.org/oneprovider-common-test-cb:2102-9"
 DEV_RELEASE_BASE_IMAGE  ?= "onedata/oneprovider-dev-common:2102-9"
 HTTP_PROXY              ?= "http://proxy.devel.onedata.org:3128"
 RETRIES                 ?= 0
@@ -309,6 +309,22 @@ docker-dev:
                       --report docker-dev-build-report.txt \
                       --short-report docker-dev-build-list.json \
                       --name oneprovider-dev \
+                      --publish --remove docker
+
+docker-test-cb:
+	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
+                      --password $(DOCKER_REG_PASSWORD) \
+                      --build-arg BASE_IMAGE=$(PROD_RELEASE_BASE_IMAGE) \
+                      --build-arg RELEASE=$(RELEASE) \
+                      --build-arg RELEASE_TYPE=$(DOCKER_RELEASE) \
+                      --build-arg OP_PANEL_VERSION=$(OP_PANEL_VERSION) \
+                      --build-arg COUCHBASE_VERSION=$(COUCHBASE_VERSION) \
+                      --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
+                      --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
+                      --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
+                      --build-arg ONES3_VERSION=$(ONES3_VERSION) \
+                      --build-arg HTTP_PROXY=$(HTTP_PROXY) \
+                      --name oneprovider \
                       --publish --remove docker
 
 codetag-tracker:

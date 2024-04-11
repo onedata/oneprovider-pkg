@@ -14,6 +14,7 @@ ARG ONES3_VERSION
 ARG ONEPANEL_AUTOSTART=false
 ARG HTTP_PROXY
 
+# ADD oneprovider-no-deps.deb /root/oneprovider-no-deps.deb
 # Install oneprovider package
 RUN case ${RELEASE_TYPE} in \
         production) \
@@ -26,20 +27,22 @@ RUN case ${RELEASE_TYPE} in \
     sh oneprovider-${RELEASE}.sh op-panel=${OP_PANEL_VERSION}-1~${DISTRIBUTION} && \
     sh oneprovider-${RELEASE}.sh cluster-manager=${CLUSTER_MANAGER_VERSION}-1~${DISTRIBUTION} && \
     sh oneprovider-${RELEASE}.sh op-worker=${OP_WORKER_VERSION}-1~${DISTRIBUTION} && \
-    sh oneprovider-${RELEASE}.sh oneprovider=${ONEPROVIDER_VERSION}-1~${DISTRIBUTION} && \
+    # sh oneprovider-${RELEASE}.sh oneprovider=${ONEPROVIDER_VERSION}-1~${DISTRIBUTION} && \
+    # apt download oneprovider=${ONEPROVIDER_VERSION}-1~${DISTRIBUTION} && \
+    # dpkg -i --ignore-depends=couchbase-server-community oneprovider_${ONEPROVIDER_VERSION}-1~${DISTRIBUTION}_amd64.deb && \
     rm -f oneprovider-${RELEASE}.sh
 
 # Install ones3 package
-RUN case ${RELEASE_TYPE} in \
-        production) \
-            curl -O http://packages.onedata.org/oneclient-${RELEASE}.sh; \
-            ;; \
-        *) \
-            curl -O http://packages.devel.onedata.org/oneclient-${RELEASE}.sh; \
-            ;; \
-    esac && \
-    sh oneclient-${RELEASE}.sh ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
-    rm -f oneclient-${RELEASE}.sh
+# RUN case ${RELEASE_TYPE} in \
+#         production) \
+#             curl -O http://packages.onedata.org/oneclient-${RELEASE}.sh; \
+#             ;; \
+#         *) \
+#             curl -O http://packages.devel.onedata.org/oneclient-${RELEASE}.sh; \
+#             ;; \
+#     esac && \
+#     sh oneclient-${RELEASE}.sh ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
+#     rm -f oneclient-${RELEASE}.sh
 
 
 RUN mkdir -p /volumes/storage
