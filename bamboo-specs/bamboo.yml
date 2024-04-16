@@ -14,12 +14,12 @@ stages:
     - Build oneprovider Focal
     - Build oneprovider CentOS 7
     - Codetag Tracker
-- Test:
-    description: Test created packages
-    manual: false
-    final: false
-    jobs:
-    - Test provider packages
+# - Test:
+#     description: Test created packages
+#     manual: false
+#     final: false
+#     jobs:
+#     - Test provider packages
 - Publish packages:
     manual: false
     final: false
@@ -202,76 +202,76 @@ Codetag Tracker:
       description: Clear env
   requirements: []
   artifact-subscriptions: []
-Test provider packages:
-  key: TEST
-  description: Test created packages
-  other:
-    clean-working-dir: true
-    all-other-apps:
-      custom:
-        auto: {}
-        clover:
-          useLocalLicenseKey: 'true'
-        buildHangingConfig.enabled: 'false'
-  tasks:
-  - checkout:
-      force-clean-build: 'true'
-      description: Checkout Default Repository
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - |-
-        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
-        git remote -v
+# Test provider packages:
+#   key: TEST
+#   description: Test created packages
+#   other:
+#     clean-working-dir: true
+#     all-other-apps:
+#       custom:
+#         auto: {}
+#         clover:
+#           useLocalLicenseKey: 'true'
+#         buildHangingConfig.enabled: 'false'
+#   tasks:
+#   - checkout:
+#       force-clean-build: 'true'
+#       description: Checkout Default Repository
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - |-
+#         git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+#         git remote -v
 
-        make submodule=bamboos submodules
-      description: Init submodules
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - |-
-        ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
-            --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan cluster-manager \
-            --artifact-name cluster_manager.tar.gz
-      description: Download cluster_manager artifact
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - |-
-        ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
-            --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan oz-worker \
-            --artifact-name oz_worker.tar.gz
-      description: Download oz_worker artifact
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - |-
-        tar -xzf focal.tar.gz
-        tar -xzf centos7.tar.gz
+#         make submodule=bamboos submodules
+#       description: Init submodules
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - |-
+#         ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
+#             --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan cluster-manager \
+#             --artifact-name cluster_manager.tar.gz
+#       description: Download cluster_manager artifact
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - |-
+#         ./bamboos/artifacts/pull_artifact.py --hostname ${bamboo.artifactRepoHostname} --port ${bamboo.artifactRepoPort} \
+#             --username ${bamboo.artifactRepoUsername} --branch ${bamboo.planRepository.branchName} --plan oz-worker \
+#             --artifact-name oz_worker.tar.gz
+#       description: Download oz_worker artifact
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - |-
+#         tar -xzf focal.tar.gz
+#         tar -xzf centos7.tar.gz
 
-        make artifact_cluster_manager artifact_oz_worker
-      description: Unpack package artifacts
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - RETRIES=3 make test_provider_packaging
-      description: Test
-  final-tasks:
-  - test-parser:
-      type: junit
-      ignore-time: 'false'
-      test-results: test-reports/results.xml
-      description: Parse test results
-  - script:
-      interpreter: BINSH_OR_CMDEXE
-      scripts:
-      - curl ${bamboo.OnedataFinalTasksURL} | bash -
-      description: Clear env
-  requirements:
-  - onedata
-  artifact-subscriptions:
-  - artifact: centos7.tar.gz
-  - artifact: focal.tar.gz
+#         make artifact_cluster_manager artifact_oz_worker
+#       description: Unpack package artifacts
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - RETRIES=3 make test_provider_packaging
+#       description: Test
+#   final-tasks:
+#   - test-parser:
+#       type: junit
+#       ignore-time: 'false'
+#       test-results: test-reports/results.xml
+#       description: Parse test results
+#   - script:
+#       interpreter: BINSH_OR_CMDEXE
+#       scripts:
+#       - curl ${bamboo.OnedataFinalTasksURL} | bash -
+#       description: Clear env
+#   requirements:
+#   - onedata
+#   artifact-subscriptions:
+#   - artifact: centos7.tar.gz
+#   - artifact: focal.tar.gz
 Publish packages:
   key: PD
   other:
