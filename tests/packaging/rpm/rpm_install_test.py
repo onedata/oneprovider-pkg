@@ -97,9 +97,10 @@ def oneprovider(request, onezone, setup_command):
     command = setup_command.format(repo=distribution.repo,
                                    release=distribution.release)
     command = '{command} && ' \
-        'yum -y install python-setuptools python-pip && ' \
-        'pip install --upgrade pip==20.3.4 && ' \
-        'pip install requests'.format(command=command)
+        'yum -y install python-setuptools && ' \
+        'curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py && ' \
+        'python /tmp/get-pip.py && ' \
+        'python -m pip install requests'.format(command=command)
 
     assert 0 == docker.exec_(distribution.container,
                              interactive=True,
