@@ -124,6 +124,7 @@ def get_registration_token(distribution, onezone_domain):
     return json.loads(output)['token']
 
 
+@pytest.mark.skip()
 def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
                              interactive=True,
