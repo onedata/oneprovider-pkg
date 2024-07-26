@@ -15,12 +15,12 @@ stages:
     # Until we get convinienced that centos7 will never be needed let's keep it commented
     # - Build oneprovider CentOS 7
     - Codetag Tracker
-# - Test:
-#     description: Test created packages
-#     manual: false
-#     final: false
-#     jobs:
-#     - Test provider packages
+- Test:
+    description: Test created packages
+    manual: false
+    final: false
+    jobs:
+    - Test provider packages
 - Publish packages:
     manual: false
     final: false
@@ -203,27 +203,27 @@ Codetag Tracker:
       description: Clear env
   requirements: []
   artifact-subscriptions: []
-# Test provider packages:
-#   key: TEST
-#   description: Test created packages
-#   other:
-#     clean-working-dir: true
-#     all-other-apps:
-#       custom:
-#         auto: {}
-#         clover:
-#           useLocalLicenseKey: 'true'
-#         buildHangingConfig.enabled: 'false'
-#   tasks:
-#   - checkout:
-#       force-clean-build: 'true'
-#       description: Checkout Default Repository
-#   - script:
-#       interpreter: BINSH_OR_CMDEXE
-#       scripts:
-#       - |-
-#         git remote set-url origin ${bamboo.repository.git.repositoryUrl}
-#         git remote -v
+Test provider packages:
+  key: TEST
+  description: Test created packages
+  other:
+    clean-working-dir: true
+    all-other-apps:
+      custom:
+        auto: {}
+        clover:
+          useLocalLicenseKey: 'true'
+        buildHangingConfig.enabled: 'false'
+  tasks:
+  - checkout:
+      force-clean-build: 'true'
+      description: Checkout Default Repository
+  - script:
+      interpreter: BINSH_OR_CMDEXE
+      scripts:
+      - |-
+        git remote set-url origin ${bamboo.repository.git.repositoryUrl}
+        git remote -v
 
         make submodule=bamboos submodules
       description: Init submodules
@@ -273,7 +273,6 @@ Codetag Tracker:
   artifact-subscriptions:
   # - artifact: centos7.tar.gz
   - artifact: focal.tar.gz
-
 Publish packages:
   key: PD
   other:
