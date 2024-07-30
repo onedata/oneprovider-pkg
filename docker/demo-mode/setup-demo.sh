@@ -6,6 +6,8 @@ source /root/demo-mode/better-curl.sh
 TOKEN_FILE="/root/registration-token.txt"
 POSIX_STORAGE_MOUNT_POINT="/volumes/storage"
 
+ONEPROVIDER_DOMAIN="oneprovider.internal"  # do not use .local as it messes with some DNS setups
+
 ONEZONE_IP=$1
 HOSTNAME=$(hostname)
 PROVIDER_IP=$(hostname -I | tr -d ' ')
@@ -20,10 +22,10 @@ main() {
     echo "-------------------------------------------------------------------------"
     echo -e "\e[0m"
 
-    sed "s/${HOSTNAME}\$/${HOSTNAME}-node.oneprovider.local ${HOSTNAME}-node/g" /etc/hosts > /tmp/hosts.new
+    sed "s/${HOSTNAME}\$/${HOSTNAME}-node.${ONEPROVIDER_DOMAIN} ${HOSTNAME}-node/g" /etc/hosts > /tmp/hosts.new
     cat /tmp/hosts.new > /etc/hosts
     rm /tmp/hosts.new
-    echo "127.0.1.1 ${HOSTNAME}.oneprovider.local ${HOSTNAME}" >> /etc/hosts
+    echo "127.0.1.1 ${HOSTNAME}.${ONEPROVIDER_DOMAIN} ${HOSTNAME}" >> /etc/hosts
     echo "${ONEZONE_IP} ${ONEZONE_DOMAIN}" >> /etc/hosts
 
     # A simple heuristic to check if the DNS setup in the current docker runtime is
@@ -55,12 +57,12 @@ main() {
     export ONEPANEL_LOG_LEVEL="info" # prints logs to stdout (possible values: none, debug, info, error), by default set to info
     export ONEPANEL_EMERGENCY_PASSPHRASE="password"
     export ONEPANEL_GENERATE_TEST_WEB_CERT="true"  # default: false
-    export ONEPANEL_GENERATED_CERT_DOMAIN="oneprovider.local"  # default: ""
+    export ONEPANEL_GENERATED_CERT_DOMAIN="${ONEPROVIDER_DOMAIN}"  # default: ""
     export ONEPANEL_TRUST_TEST_CA="true"  # default: false
 
     export ONEPROVIDER_CONFIG=$(cat <<EOF
         cluster:
-          domainName: "oneprovider.local"
+          domainName: "${ONEPROVIDER_DOMAIN}"
           nodes:
             n1:
               hostname: "${HOSTNAME}"
@@ -86,7 +88,7 @@ main() {
           geoLongitude: 0.0
           register: true
           name: "demo-provider"
-          adminEmail: "admin@oneprovider.local"
+          adminEmail: "admin@${ONEPROVIDER_DOMAIN}"
           tokenProvisionMethod: "fromFile"
           tokenFile: "${TOKEN_FILE}"
           # Use built-in Let's Encrypt client to obtain and renew certificates
