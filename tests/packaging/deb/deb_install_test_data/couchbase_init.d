@@ -39,7 +39,7 @@ WAIT_INTERVAL=1
 
 test -f $DAEMON || exit 0
 
-# TODO: As this script is copyrighted we should consider taking out the added functionality
+# TODO: VFS-12218 As this script is copyrighted we should consider taking out the added functionality
 # to another init.d file that should be run before this one and check if upgrade is needed.
 upgrade() {
     /opt/couchbase/bin/install/cbupgrade -c /opt/couchbase/var/lib/couchbase/config -a yes
