@@ -311,10 +311,10 @@ docker-dev:
                       --name oneprovider-dev \
                       --publish --remove docker
 
-docker-test-cb:
+docker-test-cb-v6:
 	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
                       --password $(DOCKER_REG_PASSWORD) \
-                      --build-arg BASE_IMAGE=$(PROD_RELEASE_BASE_IMAGE) \
+                      --build-arg BASE_IMAGE=docker.onedata.org/oneprovider-common-test-cb-v6:2202-1 \
                       --build-arg RELEASE=$(RELEASE) \
                       --build-arg RELEASE_TYPE=$(DOCKER_RELEASE) \
                       --build-arg OP_PANEL_VERSION=$(OP_PANEL_VERSION) \
