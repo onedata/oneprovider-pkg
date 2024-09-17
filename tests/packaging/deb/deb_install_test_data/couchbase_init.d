@@ -32,43 +32,13 @@ DAEMON=/opt/couchbase/bin/couchbase-server
 PIDFILE=/opt/couchbase/var/lib/couchbase/couchbase-server.pid
 NODEFILE=/opt/couchbase/var/lib/couchbase/couchbase-server.node
 COOKIEFILE=/opt/couchbase/var/lib/couchbase/couchbase-server.cookie
-VERSIONFILE=/opt/couchbase/var/lib/couchbase/cb-ver
 
 WAIT_TIMEOUT=60
 WAIT_INTERVAL=1
 
 test -f $DAEMON || exit 0
 
-# TODO: VFS-12218 As this script is copyrighted we should consider taking out the added functionality
-# to another init.d file that should be run before this one and check if upgrade is needed.
-upgrade() {
-    /opt/couchbase/bin/install/cbupgrade -c /opt/couchbase/var/lib/couchbase/config -a yes
-    errcode=$?
-    if [ $errcode -ne 0 ]; then
-        log_failure_msg "Failed to upgrade couchbase server"
-    else
-        echo "511" > $VERSIONFILE
-    fi
-    return $errcode
-}
-
-check_upgrade() {
-    if [ -e $VERSIONFILE ]; then
-        v=$(cat $VERSIONFILE)
-        if [ $v -ge "511" ]; then
-            echo "The old version number is the same or higher than the current one. Not upgrading."
-            return 1
-        fi
-    fi      
-}    
-
 start() {
-    if check_upgrade; then
-        if ! upgrade; then
-            return 1
-        fi
-    fi
-            
     touch $PIDFILE $NODEFILE $COOKIEFILE
     chown couchbase $PIDFILE $NODEFILE $COOKIEFILE
     cd /opt/couchbase/var/lib/couchbase

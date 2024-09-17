@@ -101,7 +101,7 @@ with open('/root/data/config.yml', 'r') as f:
         time.sleep(5)
 
 assert status == 'ok'
-
+    
 # validate oneprovider configuration
 check_call(['service', 'cluster_manager', 'status'])
 check_call(['service', 'op_worker', 'status'])
