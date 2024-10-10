@@ -30,32 +30,23 @@ oneprovider_package = [path for path in packages
                        if path.decode().startswith('oneprovider')
                           and (dist in path)][0].decode()
 
-# get couchbase
-# check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/xenial/pool/main/c'
-#                     '/couchbase-server-community/'
-#                     'couchbase-server-community_4.5.1-ubuntu14.04_amd64.deb'])
-
-# check_call(['wget', 'http://packages.onedata.org/apt/ubuntu/2102/pool/main/o/openssl1.0'
-#                     '/libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'])
 
 # Inject Overlay config to accept test CA certificate
 check_call(['mkdir', '/etc/op_panel'])
 check_call(['cp', '/root/data/overlay.config', '/etc/op_panel/overlay.config'])
 
 # install packages
-# check_call(['sh', '-c', 'apt install -f -y '
-#             './libssl1.0.0_1.0.2n-1ubuntu5~focal_amd64.deb'
-#             ], stderr=STDOUT)
 check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             'tzdata'
             ], stderr=STDOUT)
 
 check_call(['sh', '-c', 'INSTALL_DONT_START_SERVER=1 DEBIAN_FRONTEND=noninteractive apt install -f -y '
-            'couchbase-server-community'
+            'couchbase-server-community=6.6.0-7909-1'
             ], stderr=STDOUT)
-check_call(['cp', '/root/data/couchbase-server', '/etc/init.d/couchbase-server'])
-check_call(['cp', '/root/data/couchbase_init.d', '/opt/couchbase/etc/couchbase_init.d'])
-check_call(['chown', 'couchbase:couchbase', '/opt/couchbase/etc/couchbase_init.d'])
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
+            'couchbase-onedata-addons'
+            ], stderr=STDOUT)
+
 check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.format(package=op_panel_package)
             ], stderr=STDOUT)

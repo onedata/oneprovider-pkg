@@ -311,21 +311,5 @@ docker-dev:
                       --name oneprovider-dev \
                       --publish --remove docker
 
-# docker-test-cb-v6:
-# 	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
-#                       --password $(DOCKER_REG_PASSWORD) \
-#                       --build-arg BASE_IMAGE=docker.onedata.org/oneprovider-common-test-cb-v6:2202-1 \
-#                       --build-arg RELEASE=$(RELEASE) \
-#                       --build-arg RELEASE_TYPE=$(DOCKER_RELEASE) \
-#                       --build-arg OP_PANEL_VERSION=$(OP_PANEL_VERSION) \
-#                       --build-arg COUCHBASE_VERSION=$(COUCHBASE_VERSION) \
-#                       --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
-#                       --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
-#                       --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
-#                       --build-arg ONES3_VERSION=$(ONES3_VERSION) \
-#                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
-#                       --name oneprovider \
-#                       --publish --remove docker
-
 codetag-tracker:
 	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package,oneclient

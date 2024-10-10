@@ -14,7 +14,6 @@ ARG ONES3_VERSION
 ARG ONEPANEL_AUTOSTART=false
 ARG HTTP_PROXY
 
-# ADD oneprovider-no-deps.deb /root/oneprovider-no-deps.deb
 # Install oneprovider package
 RUN case ${RELEASE_TYPE} in \
         production) \
