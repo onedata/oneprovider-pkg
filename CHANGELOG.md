@@ -1,8 +1,17 @@
-Release notes for project oneprovider-pkg
-=========================================
+# Release notes for project oneprovider-pkg
 
-CHANGELOG
----------
+## CHANGELOG
+
+### 21.02.7
+
+-   **VFS-12295** Web GUI: Fixed issues with opening share views without
+    some privileges and when filea had been deleted.
+-   **VFS-12284** Web GUI: Improved GUI for Europeana Data Model:
+    updated metadata specification, added more validators, improved UX.
+-   **VFS-12080** Web GUI: Added support for creating custom login view
+    pages.
+-   **VFS-12050** Web GUI: Added support for customizable extended
+    attributes (xattrs) columns in file browser.
 
 ### 21.02.6
 
