@@ -9,6 +9,9 @@ cluster:
   workers:
     nodes:
       - "n1"
+  oneS3:
+    nodes:
+      - "n1"
   databases:
     nodes:
       - "n1"

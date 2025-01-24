@@ -29,6 +29,7 @@ function stop_service {
 
 ERR_COUNTER=0
 stop_service op_panel; ERR_COUNTER=$((ERR_COUNTER + $?))
+stop_service ones3; ERR_COUNTER=$((ERR_COUNTER + $?))
 stop_service op_worker; ERR_COUNTER=$((ERR_COUNTER + $?))
 stop_service cluster_manager; ERR_COUNTER=$((ERR_COUNTER + $?))
 stop_service couchbase-server; ERR_COUNTER=$((ERR_COUNTER + $?))
