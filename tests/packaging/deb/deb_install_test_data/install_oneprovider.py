@@ -29,6 +29,8 @@ op_worker_package = \
 oneprovider_package = [path for path in packages
                        if path.decode().startswith('oneprovider')
                           and (dist in path)][0].decode()
+ones3_package = [path for path in packages if path.decode().startswith('ones3')
+                 and (dist in path)][0].decode()
 
 
 # Inject Overlay config to accept test CA certificate
@@ -59,6 +61,9 @@ check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
 check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
             '/root/pkg/{package}'.
             format(package=oneprovider_package)], stderr=STDOUT)
+check_call(['sh', '-c', 'DEBIAN_FRONTEND=noninteractive apt install -f -y '
+            '/root/pkg/{package}'.
+            format(package=ones3_package)], stderr=STDOUT)
 
 # validate packages installation
 check_call(['service', 'op_panel', 'status'])
@@ -96,6 +101,7 @@ assert status == 'ok'
 # validate oneprovider configuration
 check_call(['service', 'cluster_manager', 'status'])
 check_call(['service', 'op_worker', 'status'])
+check_call(['service', 'ones3', 'status'])
 
 # stop oneprovider services
 for service in ['workers', 'managers', 'databases']:
