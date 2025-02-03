@@ -7,8 +7,6 @@ __license__ = "This software is released under the MIT license cited in " \
 
 import inspect
 import os
-import sys
-import time
 
 
 def config_file(relative_file_path):
@@ -31,68 +29,3 @@ def get_file_name(file_path):
     i.e. get_file_name("dir1/dir2/file.py") will return "file"
     """
     return os.path.splitext(os.path.basename(file_path))[0]
-
-
-def get_logdir_name(root_dir, test_name):
-    """Returns path to logs directory
-    i.e. get_logdir_name("tests/mytest", "test1") will return
-    "tests/mytest/test1.<timestamp>"
-    """
-    timestamp = str(time.time())
-    return os.path.join(root_dir, ".".join([test_name, timestamp]))
-
-
-def make_logdir(root_dir, test_name):
-    """Creates logdir if it doesn't exist."""
-    name = get_logdir_name(root_dir, test_name)
-    if not os.path.exists(name):
-        os.makedirs(name)
-    return name
-
-
-def get_json_files(dir, relative=False):
-    """Gets all .json files from given directory
-    Returns list of files' absolute paths"""
-    jsons = []
-    for file in os.listdir(dir):
-        if file.endswith(".json"):
-            if not relative:
-                jsons.append(os.path.join(dir, file))
-            else:
-                jsons.append(file)
-    return jsons
-
-
-def save_log_to_file(file_path, log):
-    """Saves log to file pointed by file_path"""
-    f = open(file_path, 'w')
-    f.write(log)
-    f.close()
-
-
-def get_module(name):
-    """Returns module object"""
-    return sys.modules[name]
-
-
-def get_function(module, function_name):
-    """Returns function object from given module"""
-    return getattr(module, function_name)
-
-
-def ensure_json(file):
-    """Ensures that file has .json extension."""
-    if os.path.splitext(file)[1] != ".json":
-        file = ".".join([file, "json"])
-    return file
-
-
-def absolute_path_to_env_file(dir, file):
-    """Returns absolute path to environment file from dir. Ensures that file
-    has .json extension"""
-    return os.path.join(dir, ensure_json(file))
-
-
-def escape_path(path):
-    """Returns path with escaped space and apostrophe"""
-    return path.replace("'", "\\'").replace(" ", "\ ")
