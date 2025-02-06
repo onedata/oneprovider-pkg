@@ -73,6 +73,9 @@ main() {
           workers:
             nodes:
               - "n1"
+          oneS3:
+            nodes:
+              - "n1"
           databases:
             # set the lowest possible ram quota for couchbase for a lightweight deployment
             serverQuota: 256  # per-node Couchbase cache size in MB for all buckets

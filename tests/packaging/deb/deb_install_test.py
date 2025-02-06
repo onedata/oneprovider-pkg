@@ -12,6 +12,7 @@ file_dir = os.path.dirname(os.path.realpath(__file__))
 with open('./RELEASE', 'r') as f:
     release = f.read().replace('\n', '')
 
+
 class Distribution(object):
 
     def __init__(self, request, link={}, privileged=False):
@@ -75,6 +76,7 @@ def onezone(request):
 
     return Onezone(result['oz_worker_nodes'], dockers)
 
+
 @pytest.fixture(scope='module',
                 params=['focal'])
 def oneprovider(request, onezone, setup_command):
@@ -104,6 +106,7 @@ def oneprovider(request, onezone, setup_command):
 
     return distribution
 
+
 def get_registration_token(distribution, onezone_domain):
     uri = '/api/v3/onezone/user/clusters/provider_registration_token/'
     cmd = 'curl -Ss -k -X POST -u provideradmin:password https://{}{}'.format(
@@ -111,6 +114,7 @@ def get_registration_token(distribution, onezone_domain):
     output = docker.exec_(distribution.container, interactive=True,
                           tty=True, output=True, command=cmd).strip()
     return json.loads(output)['token']
+
 
 def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
