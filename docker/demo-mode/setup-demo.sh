@@ -215,6 +215,26 @@ register_and_set_up_oneprovider() {
             "geoLongitude": "'"${OP_LONGITUDE}"'"
         }' > /dev/null
 
+    PROVIDER_ID=$(success_curl "https://${PROVIDER_IP}/api/v3/oneprovider/configuration" | jq -r .providerId)
+    PROVIDER_VSN=$(success_curl "https://${PROVIDER_IP}/api/v3/oneprovider/configuration" | jq -r .version)
+    RETRY_NUM=0
+    # make sure Oneprovider updates its cluster info in Onezone
+    while true; do
+        REGISTERED_VSN=$(success_curl "https://${ONEZONE_DOMAIN}/api/v3/onezone/clusters/${PROVIDER_ID}" \
+            -H "x-auth-token: $ACCESS_TOKEN" | jq -r .workerVersion.release
+        )
+        if [[ "${PROVIDER_VSN}" == "${REGISTERED_VSN}" ]]; then
+            break
+        fi
+
+        RETRY_NUM=$((RETRY_NUM + 1))
+        if [[ ${RETRY_NUM} -eq 30 ]]; then
+            echo "ERROR: Timeout waiting for the Oneprovider cluster info to be updated in Onezone"
+            exit_and_kill_docker
+        fi
+        sleep 1
+    done
+
     SUPPORT_TOKEN=$(success_curl -u admin:password \
         "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/temporary" \
         -X POST -H 'Content-type: application/json' -d '{
