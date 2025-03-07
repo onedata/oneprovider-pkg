@@ -17,7 +17,7 @@ main() {
     echo "-------------------------------------------------------------------------"
     echo "Starting Oneprovider in demo mode..."
     echo "The IP address is: $PROVIDER_IP"
-    echo "When the service is ready, an adequate log will appear here."
+    echo "When the service is ready, an adequate log will appear."
     echo "You may also use the await script: \"docker exec \$CONTAINER_ID await-demo\"."
     echo "-------------------------------------------------------------------------"
     echo -e "\e[0m"
@@ -45,65 +45,80 @@ main() {
         echo "8.8.8.8" > /etc/resolv.conf
     fi
 
-    # all certs in the demo env are self-signed, skip any verification
-    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_panel/config.d/disable-ssl-verification.config
-    echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_worker/config.d/disable-ssl-verification.config
+    if [ -f /etc/op_worker/provider_root_token.json ]; then
+        echo -e "\e[1;33m"
+        echo "-------------------------------------------------------------------------"
+        echo "Detected persistence files from a previous run."
+        echo "Assuming that the provider is already set up and resuming the cluster."
+        echo "In case of problems, consider clearing the persistence volume and "
+        echo "re-running for a fresh deployment."
+        echo "-------------------------------------------------------------------------"
+        echo -e "\e[0m"
 
-    chmod 777 "${POSIX_STORAGE_MOUNT_POINT}"
+        export ONEPANEL_BATCH_MODE="true"
+        export ONEPANEL_EMERGENCY_PASSPHRASE="password"
+    else
+        # all certs in the demo env are self-signed, skip any verification
+        echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_panel/config.d/disable-ssl-verification.config
+        echo '[{ctool, [{force_insecure_connections, true}]}].' > /etc/op_worker/config.d/disable-ssl-verification.config
 
-    # Oneprovider batch installation config
-    export ONEPANEL_DEBUG_MODE="true" # prevents container exit on configuration error
-    export ONEPANEL_BATCH_MODE="true"
-    export ONEPANEL_LOG_LEVEL="info" # prints logs to stdout (possible values: none, debug, info, error), by default set to info
-    export ONEPANEL_EMERGENCY_PASSPHRASE="password"
-    export ONEPANEL_GENERATE_TEST_WEB_CERT="true"  # default: false
-    export ONEPANEL_GENERATED_CERT_DOMAIN="${ONEPROVIDER_DOMAIN}"  # default: ""
-    export ONEPANEL_TRUST_TEST_CA="true"  # default: false
+        chmod 777 "${POSIX_STORAGE_MOUNT_POINT}"
 
-    export ONEPROVIDER_CONFIG=$(cat <<EOF
-        cluster:
-          domainName: "${ONEPROVIDER_DOMAIN}"
-          nodes:
-            n1:
-              hostname: "${HOSTNAME}"
-          managers:
-            mainNode: "n1"
-            nodes:
-              - "n1"
-          workers:
-            nodes:
-              - "n1"
-          oneS3:
-            nodes:
-              - "n1"
-          databases:
-            # set the lowest possible ram quota for couchbase for a lightweight deployment
-            serverQuota: 256  # per-node Couchbase cache size in MB for all buckets
-            bucketQuota: 256  # per-bucket Couchbase cache size in MB across the cluster
-            nodes:
-              - "n1"
-          storages:
-            posix:
-              type: "posix"
-              mountPoint: "${POSIX_STORAGE_MOUNT_POINT}"
-        oneprovider:
-          geoLatitude: 0.0
-          geoLongitude: 0.0
-          register: true
-          name: "demo-provider"
-          adminEmail: "admin@${ONEPROVIDER_DOMAIN}"
-          tokenProvisionMethod: "fromFile"
-          tokenFile: "${TOKEN_FILE}"
-          # Use built-in Let's Encrypt client to obtain and renew certificates
-          letsEncryptEnabled: false
-          # Automatically register this Oneprovider in Onezone without subdomain delegation
-          subdomainDelegation: false
-          domain: "${PROVIDER_IP}"
+        # Oneprovider batch installation config
+        export ONEPANEL_DEBUG_MODE="true" # prevents container exit on configuration error
+        export ONEPANEL_BATCH_MODE="true"
+        export ONEPANEL_LOG_LEVEL="info" # prints logs to stdout (possible values: none, debug, info, error), by default set to info
+        export ONEPANEL_EMERGENCY_PASSPHRASE="password"
+        export ONEPANEL_GENERATE_TEST_WEB_CERT="true"  # default: false
+        export ONEPANEL_GENERATED_CERT_DOMAIN="${ONEPROVIDER_DOMAIN}"  # default: ""
+        export ONEPANEL_TRUST_TEST_CA="true"  # default: false
 
-        onezone:
-          domainName: "${ONEZONE_IP}"
+        export ONEPROVIDER_CONFIG=$(cat <<EOF
+          cluster:
+            domainName: "${ONEPROVIDER_DOMAIN}"
+            nodes:
+              n1:
+                hostname: "${HOSTNAME}"
+            managers:
+              mainNode: "n1"
+              nodes:
+                - "n1"
+            workers:
+              nodes:
+                - "n1"
+            oneS3:
+              nodes:
+                - "n1"
+            databases:
+              # set the lowest possible ram quota for couchbase for a lightweight deployment
+              serverQuota: 256  # per-node Couchbase cache size in MB for all buckets
+              bucketQuota: 256  # per-bucket Couchbase cache size in MB across the cluster
+              nodes:
+                - "n1"
+            storages:
+              posix:
+                type: "posix"
+                mountPoint: "${POSIX_STORAGE_MOUNT_POINT}"
+          oneprovider:
+            geoLatitude: 0.0
+            geoLongitude: 0.0
+            register: true
+            name: "demo-provider"
+            adminEmail: "admin@${ONEPROVIDER_DOMAIN}"
+            tokenProvisionMethod: "fromFile"
+            tokenFile: "${TOKEN_FILE}"
+            # Use built-in Let's Encrypt client to obtain and renew certificates
+            letsEncryptEnabled: false
+            # Automatically register this Oneprovider in Onezone without subdomain delegation
+            subdomainDelegation: false
+            domain: "${PROVIDER_IP}"
+
+          onezone:
+            domainName: "${ONEZONE_IP}"
 EOF
 )
+    fi
+
     # After the main process finishes here, the Oneprovider entrypoint is run.
 
     # Run all the other procedures in an async process (so the service can already start booting)
@@ -112,87 +127,15 @@ EOF
             exit_and_kill_docker
         fi
 
-        ADMIN_ID=$(success_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" | jq -r .userId)
-
-        # multiple providers can be run in demo mode, they will get unique numbers this way
-        # (named tokens must have unique names, so this loop acts as a critical section)
-        PROVIDER_NUMBER=1
-        while [[ -z "${REG_TOKEN}" ]]; do
-            CURL_RESULT=$(do_curl -u admin:password \
-                "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/named" \
-                -X POST -H 'Content-type: application/json' -d '
-                    {
-                        "name": "Oneprovider registration token '"${PROVIDER_NUMBER}"'",
-                        "type": {
-                            "inviteToken": {
-                                "inviteType": "registerOneprovider",
-                                "adminUserId": "'"${ADMIN_ID}"'"
-                            }
-                        }
-                    }')
-            if [[ "$?" -eq 0 ]]; then
-                REG_TOKEN=$(echo "${CURL_RESULT}" | jq -r .token)
-            fi
-            if [[ -z "$REG_TOKEN" ]]; then
-                PROVIDER_NUMBER=$((PROVIDER_NUMBER + 1))
-                sleep 0.2
-            fi
-        done
-
-        echo "-------------------------------------------------------------------------"
-        echo "Registration token: ${REG_TOKEN}"
-        echo "-------------------------------------------------------------------------"
-        echo "${REG_TOKEN}" >> "${TOKEN_FILE}"
-
-        DEMO_SPACE_ID=$(ensure_demo_space)
-        if [[ -z "$DEMO_SPACE_ID" ]]; then
-            # retry once, for some reason it may fail (unidentified race condition?)
-            sleep 1
-            DEMO_SPACE_ID=$(ensure_demo_space)
-            if [[ -z "$DEMO_SPACE_ID" ]]; then
-                echo "ERROR: Cannot resolve the demo space"
-                exit_and_kill_docker
-            fi
+        if [ ! -f /etc/op_worker/provider_root_token.json ]; then
+            register_and_set_up_oneprovider
         fi
-
-        if ! await; then
-            exit_and_kill_docker
-        fi
-
-        ACCESS_TOKEN=$(demo-access-token)
-
-        OP_NAME=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f1)
-        OP_LATITUDE=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f2)
-        OP_LONGITUDE=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f3)
-        success_curl "https://${PROVIDER_IP}/api/v3/onepanel/provider" \
-            -H "x-auth-token: $ACCESS_TOKEN" -X PATCH -H "Content-Type: application/json" \
-            -d '{
-                "name": "'"${OP_NAME}"'",
-                "geoLatitude": "'"${OP_LATITUDE}"'",
-                "geoLongitude": "'"${OP_LONGITUDE}"'"
-            }' > /dev/null
-
-        SUPPORT_TOKEN=$(success_curl -u admin:password \
-            "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/temporary" \
-            -X POST -H 'Content-type: application/json' -d '{
-                "type": {
-                    "inviteToken": {
-                        "inviteType": "supportSpace",
-                        "spaceId": "'"${DEMO_SPACE_ID}"'"
-                    }
-                },
-                "caveats": [{"type": "time", "validUntil": '$(($(date +%s) + 3600))'}]
-            }' | jq -r .token)
-
-        STORAGE_ID=$(success_curl -H "x-auth-token: $ACCESS_TOKEN" "https://${PROVIDER_IP}/api/v3/onepanel/provider/storages" | jq -r '.ids[0]')
-
-        success_curl "https://${PROVIDER_IP}/api/v3/onepanel/provider/spaces" \
-            -H "x-auth-token: $ACCESS_TOKEN" -X POST -H "Content-Type: application/json" \
-            -d '{"token":"'"${SUPPORT_TOKEN}"'", "size": 10737418240, "storageId": "'"${STORAGE_ID}"'"}' > /dev/null
 
         if ! await-demo; then
             exit_and_kill_docker
         fi
+
+        sleep 5  # this lets the logs be flushed before displaying the final success info
 
         echo -e "\e[1;32m"
         echo "-------------------------------------------------------------------------"
@@ -209,6 +152,108 @@ EOF
     } &
 
 }
+
+
+register_and_set_up_oneprovider() {
+    ADMIN_ID=$(success_curl -u admin:password "https://${ONEZONE_DOMAIN}/api/v3/onezone/user" | jq -r .userId)
+
+    # multiple providers can be run in demo mode, they will get unique numbers this way
+    # (named tokens must have unique names, so this loop acts as a critical section)
+    PROVIDER_NUMBER=1
+    while [[ -z "${REG_TOKEN}" ]]; do
+        CURL_RESULT=$(do_curl -u admin:password \
+            "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/named" \
+            -X POST -H 'Content-type: application/json' -d '
+                {
+                    "name": "Oneprovider registration token '"${PROVIDER_NUMBER}"'",
+                    "type": {
+                        "inviteToken": {
+                            "inviteType": "registerOneprovider",
+                            "adminUserId": "'"${ADMIN_ID}"'"
+                        }
+                    }
+                }')
+        if [[ "$?" -eq 0 ]]; then
+            REG_TOKEN=$(echo "${CURL_RESULT}" | jq -r .token)
+        fi
+        if [[ -z "$REG_TOKEN" ]]; then
+            PROVIDER_NUMBER=$((PROVIDER_NUMBER + 1))
+            sleep 0.2
+        fi
+    done
+
+    echo "-------------------------------------------------------------------------"
+    echo "Registration token: ${REG_TOKEN}"
+    echo "-------------------------------------------------------------------------"
+    echo "${REG_TOKEN}" >> "${TOKEN_FILE}"
+
+    DEMO_SPACE_ID=$(ensure_demo_space)
+    if [[ -z "$DEMO_SPACE_ID" ]]; then
+        # retry once, for some reason it may fail (unidentified race condition?)
+        sleep 1
+        DEMO_SPACE_ID=$(ensure_demo_space)
+        if [[ -z "$DEMO_SPACE_ID" ]]; then
+            echo "ERROR: Cannot resolve the demo space"
+            exit_and_kill_docker
+        fi
+    fi
+
+    if ! await; then
+        exit_and_kill_docker
+    fi
+
+    ACCESS_TOKEN=$(demo-access-token)
+
+    OP_NAME=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f1)
+    OP_LATITUDE=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f2)
+    OP_LONGITUDE=$(get_provider_data ${PROVIDER_NUMBER} | cut -d':' -f3)
+    success_curl "https://${PROVIDER_IP}/api/v3/onepanel/provider" \
+        -H "x-auth-token: $ACCESS_TOKEN" -X PATCH -H "Content-Type: application/json" \
+        -d '{
+            "name": "'"${OP_NAME}"'",
+            "geoLatitude": "'"${OP_LATITUDE}"'",
+            "geoLongitude": "'"${OP_LONGITUDE}"'"
+        }' > /dev/null
+
+    PROVIDER_ID=$(success_curl "https://${PROVIDER_IP}/api/v3/oneprovider/configuration" | jq -r .providerId)
+    PROVIDER_VSN=$(success_curl "https://${PROVIDER_IP}/api/v3/oneprovider/configuration" | jq -r .version)
+    RETRY_NUM=0
+    # make sure Oneprovider updates its cluster info in Onezone
+    while true; do
+        REGISTERED_VSN=$(success_curl "https://${ONEZONE_DOMAIN}/api/v3/onezone/clusters/${PROVIDER_ID}" \
+            -H "x-auth-token: $ACCESS_TOKEN" | jq -r .workerVersion.release
+        )
+        if [[ "${PROVIDER_VSN}" == "${REGISTERED_VSN}" ]]; then
+            break
+        fi
+
+        RETRY_NUM=$((RETRY_NUM + 1))
+        if [[ ${RETRY_NUM} -eq 30 ]]; then
+            echo "ERROR: Timeout waiting for the Oneprovider cluster info to be updated in Onezone"
+            exit_and_kill_docker
+        fi
+        sleep 1
+    done
+
+    SUPPORT_TOKEN=$(success_curl -u admin:password \
+        "https://${ONEZONE_DOMAIN}/api/v3/onezone/user/tokens/temporary" \
+        -X POST -H 'Content-type: application/json' -d '{
+            "type": {
+                "inviteToken": {
+                    "inviteType": "supportSpace",
+                    "spaceId": "'"${DEMO_SPACE_ID}"'"
+                }
+            },
+            "caveats": [{"type": "time", "validUntil": '$(($(date +%s) + 3600))'}]
+        }' | jq -r .token)
+
+    STORAGE_ID=$(success_curl -H "x-auth-token: $ACCESS_TOKEN" "https://${PROVIDER_IP}/api/v3/onepanel/provider/storages" | jq -r '.ids[0]')
+
+    success_curl "https://${PROVIDER_IP}/api/v3/onepanel/provider/spaces" \
+        -H "x-auth-token: $ACCESS_TOKEN" -X POST -H "Content-Type: application/json" \
+        -d '{"token":"'"${SUPPORT_TOKEN}"'", "size": 10737418240, "storageId": "'"${STORAGE_ID}"'"}' > /dev/null
+}
+
 
 ensure_demo_space() {
     # by using the idGeneratorSeed, we make sure the space is created only once
@@ -227,6 +272,7 @@ ensure_demo_space() {
         fi
     done
 }
+
 
 get_provider_data() {
     case "${1}" in

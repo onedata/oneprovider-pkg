@@ -31,6 +31,28 @@ make
 The building is done in docker containers. The builders docker images are available at [Docker Hub](https://hub.docker.com/u/onedata/). 
 The build process itself is fully based on Docker containers, so no other prerequisites other than Docker should be necessary. In case of problems with Docker cache, please set `NO_CACHE=1` environment variable.
 
+## Running Oneprovider in demo mode
+
+Assumes that demo Onezone is already running, under container name `oz`.
+
+Without persistence:
+```bash
+docker run -it --rm --name op onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+```
+
+With persistence:
+```bash
+docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+```
+Notes:
+* Demo mode with persistence requires version `>= 21.02.9`.
+* Hostname must be set to the same value between consecutive runs
+  (e.g. `-h op`, like above).
+* The persistence directory mounted from the host must be the same between
+  consecutive runs (`/tmp/op-pers` in above example).
+* The POSIX storage mounted from the host must be the same between
+  consecutive runs (`/tmp/op-storage` in above example).
+
 ## Support
 
 Please use [GitHub issues](https://github.com/onedata/onedata/issues) mechanism as the main channel for reporting bugs and requesting support or new features.
