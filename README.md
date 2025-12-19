@@ -37,15 +37,15 @@ Assumes that demo Onezone is already running, under container name `oz`.
 
 Without persistence:
 ```bash
-docker run -it --rm --name op onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+docker run -it --rm --name op onedata/oneprovider:25.0 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
 ```
 
 With persistence:
 ```bash
-docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:25.0 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
 ```
 Notes:
-* Demo mode with persistence requires version `>= 21.02.9`.
+* Demo mode with persistence requires version `>= 25.0`.
 * Hostname must be set to the same value between consecutive runs
   (e.g. `-h op`, like above).
 * The persistence directory mounted from the host must be the same between

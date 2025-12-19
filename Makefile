@@ -38,7 +38,7 @@ OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
 ONES3_VERSION                 := $(shell echo ${ONES3_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
-PKG_BUILDER_VERSION     ?= -4
+PKG_BUILDER_VERSION     ?= 2102-4
 
 ifdef IGNORE_XFAIL
 TEST_RUN := ./test_run.py --ignore-xfail
@@ -69,12 +69,12 @@ NO_CACHE :=  $(shell if [ "${NO_CACHE}" != "" ]; then echo "--no-cache"; fi)
 make = $(1)/make.py -s $(1) -r . $(NO_CACHE)
 clean = $(call make, $(1)) clean
 retry = RETRIES=$(RETRIES); until $(1) && return 0 || [ $$RETRIES -eq 0 ]; do sleep $(RETRY_SLEEP); RETRIES=`expr $$RETRIES - 1`; echo "===== Cleaning up... ====="; $(if $2,$2,:); echo "\n\n\n===== Retrying build... ====="; done; return 1 
-make_rpm = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) $(2)  
+make_rpm = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) $(2)  
 mv_rpm = mv $(1)/package/packages/*.src.rpm package/$(DISTRIBUTION)/SRPMS && \
 	mv $(1)/package/packages/*.x86_64.rpm package/$(DISTRIBUTION)/x86_64
 mv_noarch_rpm = mv $(1)/package/packages/*.src.rpm package/$(DISTRIBUTION)/SRPMS && \
 	mv $(1)/package/packages/*.noarch.rpm package/$(DISTRIBUTION)/x86_64
-make_deb = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) --privileged --grant-sudo-rights --group sbuild -i onedata/deb_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) $(2)
+make_deb = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) --privileged --grant-sudo-rights --group sbuild -i onedata/deb_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) $(2)
 mv_deb = mv $(1)/package/packages/*_amd64.deb package/$(DISTRIBUTION)/binary-amd64 && \
 	mv $(1)/package/packages/*.tar.gz package/$(DISTRIBUTION)/source | true && \
 	mv $(1)/package/packages/*.dsc package/$(DISTRIBUTION)/source | true && \
@@ -197,13 +197,13 @@ rpm_oneprovider: rpm_op_panel rpm_op_worker rpm_cluster_manager
 	sed -i 's/{{op_worker_version}}/$(OP_WORKER_VERSION)/g' oneprovider_meta/oneprovider.spec
 	sed -i 's/{{op_panel_version}}/$(OP_PANEL_VERSION)/g' oneprovider_meta/oneprovider.spec
 
-	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) \
+	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) \
 		    -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -c \
 	        mock --buildsrpm --spec oneprovider_meta/oneprovider.spec \
 	        --sources oneprovider_meta --root $(DISTRIBUTION) \
 	        --resultdir oneprovider_meta/package/packages)
 
-	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) \
+	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) \
 		    -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -c \
 	        mock --rebuild oneprovider_meta/package/packages/*.src.rpm \
 	        --root $(DISTRIBUTION) --resultdir oneprovider_meta/package/packages)
