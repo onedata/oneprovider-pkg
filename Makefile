@@ -38,7 +38,7 @@ OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
 ONES3_VERSION                 := $(shell echo ${ONES3_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
-PKG_BUILDER_VERSION     ?= 2102-4
+PKG_BUILDER_VERSION     ?= 25-1
 
 ifdef IGNORE_XFAIL
 TEST_RUN := ./test_run.py --ignore-xfail
