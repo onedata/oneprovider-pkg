@@ -18,7 +18,8 @@ RUN mkdir -p /volumes/storage
 VOLUME ["/volumes/storage"]
 
 RUN pip3 install pyYAML
-RUN apt install -y python-is-python2 ca-certificates
+RUN apt install -y python-is-python2
+RUN apt update && apt install ca-certificates && apt clean
 
 ADD persistence-dir.py /root/persistence-dir.py
 
