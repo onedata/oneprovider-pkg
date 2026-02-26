@@ -8,18 +8,15 @@ import subprocess as sp
 import sys
 import textwrap
 import time
+import xml.etree.ElementTree as eTree
+from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import NamedTuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 import yaml
 from requests import codes
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-
-try:
-    import xml.etree.cElementTree as eTree
-except ImportError:
-    import xml.etree.ElementTree as eTree
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -212,12 +209,16 @@ or newer.
 """
 
 
+# -----------------------------------------------------------------------------
+# Exceptions
+# -----------------------------------------------------------------------------
+
+
 class MissingVariableError(Exception):
     """Raised when a required environment variable is not set."""
 
-    def __init__(self, variable_name):
-        message = "Missing {} environment variable".format(variable_name)
-        super().__init__(message)
+    def __init__(self, variable_name: str) -> None:
+        super().__init__(f"Missing {variable_name} environment variable")
         self.variable_name = variable_name
 
 
@@ -225,9 +226,14 @@ class AuthenticationError(Exception):
     """Raised when an API request is rejected due to invalid credentials."""
 
 
+# -----------------------------------------------------------------------------
+# Data types
+# -----------------------------------------------------------------------------
+
+
 class Label(IntEnum):
-    """
-    Label specifiers for pre-releases.
+    """Label specifiers for pre-releases.
+
     Ordered by precedence: alpha < beta < rc < stable (no label).
     """
 
@@ -237,7 +243,7 @@ class Label(IntEnum):
     STABLE = 4
 
     @classmethod
-    def from_string(cls, s):
+    def from_string(cls, s: str) -> "Label":
         if s == "alpha":
             return cls.ALPHA
         if s == "beta":
@@ -247,9 +253,9 @@ class Label(IntEnum):
         raise ValueError(f"Unknown label: {s}")
 
 
-class Revision(NamedTuple):
-    """
-    Represents a system revision based on Calendar Versioning.
+@dataclass(frozen=True, order=True)
+class Revision:
+    """Represents a system revision based on Calendar Versioning.
 
     Format: YY.Minor[.Patch][-Label]
 
@@ -275,7 +281,12 @@ class UpgradabilityCheckResult(Enum):
     DOWNGRADE = 4
 
 
-def main():
+# =============================================================================
+# Main entry point
+# =============================================================================
+
+
+def main() -> None:
     current_log_level = os.environ.get("ONEPANEL_LOG_LEVEL", "info").lower()
     try:
         previous_version = assert_upgradability()
@@ -290,7 +301,7 @@ def main():
 
         # show_details()  NOTE: currently not working correctly (all details are null)
     except Exception as e:
-        log("\nERROR: {0}".format(e))
+        log(f"\nERROR: {e}")
         if env_bool("ONEPANEL_DEBUG_MODE"):
             # Keep container running for inspection; do not dump logs or exit
             pass
@@ -308,7 +319,12 @@ def main():
     )
 
 
-def assert_upgradability():
+# =============================================================================
+# Upgradability checks
+# =============================================================================
+
+
+def assert_upgradability() -> Optional[str]:
     """Check upgradability based on versions.
 
     Returns previous_version for persistence when not fresh install, None otherwise.
@@ -357,16 +373,15 @@ def assert_upgradability():
     return prev_version
 
 
-def infer_new_version():
-    """
-    Parse RELEASES file and return the onepanel version string (e.g. "25.0").
+def infer_new_version() -> str:
+    """Parse RELEASES file and return the onepanel version string (e.g. "25.0").
+
     Exits with a message if file is missing or version pattern not found.
     """
     releases_path = ONP_RELEASES_PACKAGES_PATH
-    if get_env(ONEPANEL_OVERRIDE):
-        releases_path = os.path.join(
-            get_env(ONEPANEL_OVERRIDE), ONP_RELEASES_SOURCES_PATH
-        )
+    override_path = os.environ.get(ONEPANEL_OVERRIDE)
+    if override_path:
+        releases_path = os.path.join(override_path, ONP_RELEASES_SOURCES_PATH)
 
     if not os.path.isfile(releases_path):
         log(f"Could not find RELEASES file at {releases_path}")
@@ -387,7 +402,7 @@ def infer_new_version():
     sys.exit(1)
 
 
-def infer_previous_version():
+def infer_previous_version() -> str:
     """Resolve the previously deployed Oneprovider version.
 
     Lookup order:
@@ -411,8 +426,7 @@ def infer_previous_version():
     return ONP_DEFAULT_ASSUMED_VERSION
 
 
-def read_version_from_file():
-    """Try to read the previous version from the local version file."""
+def read_version_from_file() -> Optional[str]:
     try:
         with open(ONP_VERSION_FILE_PACKAGES_PATH, "r") as f:
             data = json.load(f)
@@ -421,12 +435,11 @@ def read_version_from_file():
         return None
 
 
-def infer_version_from_onezone():
+def infer_version_from_onezone() -> Optional[str]:
     """Fetch the previously registered version from Onezone's cluster record.
 
     Requires op_worker's autogenerated.config (for oz_domain) and
     provider_root_token.json (for cluster_id and root_token).
-    Returns a version string (e.g. "25.0") or None on any failure.
     """
     oz_domain = parse_oz_domain()
     if not oz_domain:
@@ -458,12 +471,11 @@ def infer_version_from_onezone():
         return None
 
 
-def parse_oz_domain():
+def parse_oz_domain() -> Optional[str]:
     """Extract oz_domain from op_worker's autogenerated.config.
 
     The file contains Erlang terms; oz_domain appears as either
     {oz_domain,"HOST"} or {oz_domain,<<"HOST">>}.
-    Returns the domain string or None.
     """
     try:
         with open(OP_WORKER_AUTOGENERATED_CONFIG_PATH, "r") as f:
@@ -480,11 +492,8 @@ def parse_oz_domain():
     return None
 
 
-def read_provider_credentials():
-    """Read provider_id and root_token from the provider root token file.
-
-    Returns (cluster_id, token) or (None, None) on any failure.
-    """
+def read_provider_credentials() -> Tuple[Optional[str], Optional[str]]:
+    """Returns (provider_id, root_token) or (None, None) on any failure."""
     try:
         with open(OP_WORKER_PROVIDER_ROOT_TOKEN_PATH, "r") as f:
             data = json.load(f)
@@ -493,7 +502,7 @@ def read_provider_credentials():
         return None, None
 
 
-def fetch_cluster_info(oz_domain, cluster_id, token):
+def fetch_cluster_info(oz_domain: str, cluster_id: str, token: str) -> Optional[str]:
     """GET /api/v3/onezone/clusters/{cluster_id} from Onezone.
 
     Returns the raw response body (str) or None on failure.
@@ -514,7 +523,9 @@ def fetch_cluster_info(oz_domain, cluster_id, token):
         return None
 
 
-def check_upgradability(prev_version_str, new_version_str):
+def check_upgradability(
+    prev_version_str: str, new_version_str: str
+) -> UpgradabilityCheckResult:
     prev_rev = parse_revision(prev_version_str.strip())
     new_rev = parse_revision(new_version_str.strip())
 
@@ -533,9 +544,8 @@ def check_upgradability(prev_version_str, new_version_str):
     return UpgradabilityCheckResult.SAME_VERSION
 
 
-def parse_revision(version_str) -> Revision:
+def parse_revision(version_str: str) -> Revision:
     try:
-        # Handle empty string or None
         if not version_str:
             raise ValueError("Empty revision string")
 
@@ -582,13 +592,14 @@ def parse_revision(version_str) -> Revision:
         raise ValueError(f"Invalid revision format '{version_str}': {e}") from e
 
 
-def update_persisted_version(previous_version=None):
-    """
-    Write deployed-version.json. When previous_version is None (fresh deploy),
-    only current is written. Otherwise, both previous and current are stored.
+def update_persisted_version(previous_version: Optional[str] = None) -> None:
+    """Write deployed-version.json.
+
+    When previous_version is None (fresh deploy),only current is written.
+    Otherwise, both previous and current are stored.
     """
     current = infer_new_version()
-    data = {"current": current}
+    data: Dict[str, str] = {"current": current}
     if previous_version is not None:
         data["previous"] = previous_version
 
@@ -597,11 +608,16 @@ def update_persisted_version(previous_version=None):
         json.dump(data, f, indent=4)
 
 
-def preconfigure():
-    """Prepare app.cconfig and vm.args."""
+# =============================================================================
+# Configuration (app.config, vm.args)
+# =============================================================================
+
+
+def preconfigure() -> None:
+    """Prepare app.config and vm.args."""
     upgrade_legacy_vm_args_if_exists()
 
-    override_path = get_env(ONEPANEL_OVERRIDE)
+    override_path = os.environ.get(ONEPANEL_OVERRIDE)
     if override_path:
         app_config_path = os.path.join(override_path, ONP_GENERATED_CONFIG_SOURCES_PATH)
         vm_args_path = os.path.join(override_path, ONP_VM_ARGS_SOURCES_PATH)
@@ -615,8 +631,9 @@ def preconfigure():
     set_node_name(vm_args_path)
 
 
-def upgrade_legacy_vm_args_if_exists():
-    override_path = get_env(ONEPANEL_OVERRIDE)
+def upgrade_legacy_vm_args_if_exists() -> None:
+    """Migrate old-style vm.args files to the autogenerated format."""
+    override_path = os.environ.get(ONEPANEL_OVERRIDE)
     if override_path:
         legacy_vm_args_path_template = os.path.join(
             override_path,
@@ -633,7 +650,7 @@ def upgrade_legacy_vm_args_if_exists():
             upgrade_legacy_vm_args(legacy_vm_args_path)
 
 
-def upgrade_legacy_vm_args(legacy_vm_args_path):
+def upgrade_legacy_vm_args(legacy_vm_args_path: str) -> None:
     with open(legacy_vm_args_path, "r") as f:
         content = f.read()
 
@@ -654,7 +671,7 @@ def upgrade_legacy_vm_args(legacy_vm_args_path):
     )
 
 
-def config_file_initialized(file_path):
+def config_file_initialized(file_path: str) -> bool:
     try:
         with open(file_path, "r") as f:
             content = f.read()
@@ -663,20 +680,22 @@ def config_file_initialized(file_path):
         return False
 
 
-def generate_config_file(file_path):
+def generate_config_file(file_path: str) -> None:
+    """Build the initial onepanel autogenerated.config with env-driven options."""
+
     content = (
         "% MACHINE GENERATED FILE. DO NOT MODIFY.\n"
         "% Use overlay.config for custom configuration.\n\n"
         "[{onepanel, [{config_initialized, true}"
     )
 
-    if get_env("ONEPANEL_GENERATE_TEST_WEB_CERT"):
-        domain = get_env("ONEPANEL_GENERATED_CERT_DOMAIN", "")
+    if os.environ.get("ONEPANEL_GENERATE_TEST_WEB_CERT"):
+        domain = os.environ.get("ONEPANEL_GENERATED_CERT_DOMAIN", "")
         flag = str(env_bool("ONEPANEL_GENERATE_TEST_WEB_CERT")).lower()
         content += f",\n{{generate_test_web_cert, {flag}}}"
         content += f',\n{{test_web_cert_domain, "{domain}"}}'
 
-    if get_env("ONEPANEL_TRUST_TEST_CA"):
+    if os.environ.get("ONEPANEL_TRUST_TEST_CA"):
         flag = str(env_bool("ONEPANEL_TRUST_TEST_CA")).lower()
         content += f",\n{{treat_test_ca_as_trusted, {flag}}}"
 
@@ -686,16 +705,21 @@ def generate_config_file(file_path):
         f.write(content)
 
 
-def set_node_name(file_path):
+def set_node_name(file_path: str) -> None:
     hostname = sp.check_output(["hostname", "-f"]).decode().rstrip("\n")
-    replace(file_path, r"-name .*", "-name onepanel@{0}".format(hostname))
+    replace_in_file(file_path, r"-name .*", f"-name onepanel@{hostname}")
 
 
-def start_onepanel():
+# =============================================================================
+# Onepanel service lifecycle
+# =============================================================================
+
+
+def start_onepanel() -> None:
     log("Starting op_panel...")
 
     cmd = ["service", "op_panel", "start"]
-    override_path = get_env(ONEPANEL_OVERRIDE)
+    override_path = os.environ.get(ONEPANEL_OVERRIDE)
     if override_path:
         op_panel_script = os.path.join(override_path, ONP_BIN_SOURCES_PATH)
         cmd = [op_panel_script, "start"]
@@ -703,7 +727,7 @@ def start_onepanel():
     try:
         sp.check_output(cmd)
     except sp.CalledProcessError as err:
-        log("ERROR: " + str(err))
+        log(f"ERROR: {err}")
         log("Output was:\n")
         log(str(err.output))
         sys.exit(err.returncode)
@@ -712,7 +736,7 @@ def start_onepanel():
     log("[  OK  ] op_panel started")
 
 
-def wait_for_rest_listener():
+def wait_for_rest_listener() -> None:
     first = True
     connected = False
     while not connected:
@@ -727,7 +751,7 @@ def wait_for_rest_listener():
             connected = True
 
 
-def configure_deployment():
+def configure_deployment() -> None:
     batch_config = get_batch_config()
     try:
         if configure(batch_config):
@@ -749,9 +773,9 @@ def configure_deployment():
             log(MSG_MISSING_NEW_PASSPHRASE)
 
 
-def get_batch_config():
-    batch_config = get_env("ONEPROVIDER_CONFIG", "")
-    batch_config = yaml.safe_load(batch_config)
+def get_batch_config() -> dict:
+    """Parse ONEPROVIDER_CONFIG env var and ensure interactiveDeployment is set."""
+    batch_config = yaml.safe_load(os.environ.get("ONEPROVIDER_CONFIG", ""))
     if not batch_config:
         return {}
 
@@ -764,11 +788,11 @@ def get_batch_config():
     return batch_config
 
 
-def configure(config):
-    """
-    Attempts to deploy the Oneprovider
-    :return: False if configuration was skipped because of existing deployment,
-        True upon success
+def configure(config: dict) -> bool:
+    """Attempts to deploy the Oneprovider.
+
+    Returns False if configuration was skipped because of existing deployment,
+    True upon success.
     """
     passphrase = get_emergency_passphrase()
 
@@ -778,7 +802,7 @@ def configure(config):
         # emergency passphrase setup failure indicates existing deployment
         return False
 
-    r = do_auth_request(
+    r = auth_request(
         requests.post,
         f"{ONEPANEL_BASE_URL}/api/v3/onepanel/provider/configuration",
         headers={"content-type": "application/x-yaml"},
@@ -791,24 +815,29 @@ def configure(config):
 
     if not r.ok:
         raise RuntimeError(
-            "Failed to start configuration process, the response was:\n"
-            "  code: {0}\n"
-            "  body: {1}\n"
-            "For more information please check the logs.".format(r.status_code, r.text)
+            f"Failed to start configuration process, the response was:\n"
+            f"  code: {r.status_code}\n"
+            f"  body: {r.text}\n"
+            f"For more information please check the logs."
         )
 
-    loc = r.headers["location"]
+    poll_configuration_status(r.headers["location"])
+    return True
+
+
+def poll_configuration_status(location: str) -> None:
+    """Poll the onepanel task endpoint until configuration completes or fails."""
     status = "running"
-    steps = []
-    resp = {}
+    steps: List[str] = []
+    resp: dict = {}
 
     log("\nConfiguring Oneprovider:")
     while status == "running":
-        r = do_auth_request(requests.get, ONEPANEL_BASE_URL + loc, verify=False)
+        r = auth_request(requests.get, ONEPANEL_BASE_URL + location, verify=False)
         if not r.ok:
             raise RuntimeError(
-                "Unexpected configuration error\n{0}"
-                "For more information please check the logs.".format(r.text)
+                f"Unexpected configuration error\n{r.text}"
+                f"For more information please check the logs."
             )
 
         resp = json.loads(r.text)
@@ -823,17 +852,16 @@ def configure(config):
 
     if status != "ok":
         raise RuntimeError(format_error(resp))
-    return True
 
 
-def get_emergency_passphrase():
-    passphrase = get_env(EMERGENCY_PASSPHRASE_VARIABLE)
+def get_emergency_passphrase() -> str:
+    passphrase = os.environ.get(EMERGENCY_PASSPHRASE_VARIABLE)
     if passphrase is None:
         raise MissingVariableError(EMERGENCY_PASSPHRASE_VARIABLE)
     return passphrase
 
 
-def set_emergency_passphrase(passphrase):
+def set_emergency_passphrase(passphrase: str) -> None:
     r = requests.put(
         f"{ONEPANEL_BASE_URL}/api/v3/onepanel/emergency_passphrase",
         headers={"content-type": "application/json"},
@@ -851,9 +879,10 @@ def set_emergency_passphrase(passphrase):
         )
 
 
-def do_auth_request(request, *args, **kwargs):
+def auth_request(method: Any, *args: Any, **kwargs: Any) -> requests.Response:
+    """Perform an HTTP request with Basic auth using the emergency passphrase."""
     passphrase = get_emergency_passphrase()
-    r = request(*args, auth=(PASSPHRASE_USERNAME, passphrase), **kwargs)
+    r = method(*args, auth=(PASSPHRASE_USERNAME, passphrase), **kwargs)
     if r.status_code in (codes.unauthorized, codes.forbidden):
         raise AuthenticationError(
             "Authentication error.\n"
@@ -863,19 +892,24 @@ def do_auth_request(request, *args, **kwargs):
     return r
 
 
-def wait_for_workers():
+# =============================================================================
+# Health monitoring & log tailing
+# =============================================================================
+
+
+def wait_for_workers() -> None:
     url = f"{ONEPANEL_BASE_URL}/api/v3/onepanel/provider/nagios"
     retries = 0
-    while not nagios_up(url, retries % 10 == 9):
+    while not is_nagios_healthy(url, retries % 10 == 9):
         time.sleep(1)
         retries += 1
         if retries == 120:
             raise RuntimeError("Timeout waiting for the Onepanel service readiness")
 
 
-def nagios_up(url, log_errors=False):
+def is_nagios_healthy(url: str, log_errors: bool = False) -> bool:
     try:
-        r = do_auth_request(requests.get, url, verify=False)
+        r = auth_request(requests.get, url, verify=False)
         if not r.ok:
             if log_errors:
                 log(
@@ -891,22 +925,79 @@ def nagios_up(url, log_errors=False):
     return healthdata.attrib["status"] == "ok"
 
 
-def show_details():
+def print_logs(
+    log_level: str,
+    starting_log_cursors: Optional[List[tuple]] = None,
+    infinitely: bool = True,
+) -> List[tuple]:
+    # first run of the function
+    if not isinstance(starting_log_cursors, list):
+        starting_log_cursors = []
+        if log_level in LOG_LEVELS:
+            log(f"\nLogging on '{log_level}' level:")
+            for log_prefix, log_dir in LOGS:
+                log_file = os.path.join(log_dir, f"{log_level}.log")
+                starting_log_cursors.append((log_prefix, log_file, None, None))
+        else:
+            log(f"\nLogging to stdout disabled (log level = {log_level})")
+
+    new_log_cursors = print_new_logs(starting_log_cursors)
+    while infinitely:
+        new_log_cursors = print_new_logs(new_log_cursors)
+        time.sleep(1)
+    return new_log_cursors
+
+
+def print_new_logs(log_cursors: List[tuple]) -> List[tuple]:
+    new_logs: List[tuple] = []
+
+    for log_prefix, log_file, log_fd, log_ino in log_cursors:
+        try:
+            log_fd, log_ino = refresh_log_handle(log_file, log_fd, log_ino)
+
+            log_line = log_fd.readline()
+            while log_line:
+                log(f"{log_prefix} {log_line}", end="")
+                log_line = log_fd.readline()
+
+            new_logs.append((log_prefix, log_file, log_fd, log_ino))
+        except Exception:
+            new_logs.append((log_prefix, log_file, None, None))
+
+    return new_logs
+
+
+def refresh_log_handle(log_file, log_fd, log_ino):
+    """Re-open the log file if its inode has changed (e.g. log rotation)."""
+    if os.stat(log_file).st_ino != log_ino:
+        if log_fd:
+            log_fd.close()
+        log_fd = open(log_file, "r")
+        log_ino = os.stat(log_file).st_ino
+    return log_fd, log_ino
+
+
+# =============================================================================
+# Display & formatting
+# =============================================================================
+
+
+def show_details() -> None:
     log("\nContainer details:")
 
     container_id = get_container_id()
-    json = inspect_container(container_id)
+    container_info = inspect_container(container_id)
 
-    show_ip_address(json)
-    show_ports(json)
+    show_ip_address(container_info)
+    show_ports(container_info)
 
 
-def get_container_id():
+def get_container_id() -> str:
     with open("/proc/self/cgroup", "r") as f:
         return f.readline().split("/")[-1].rstrip("\n")
 
 
-def inspect_container(container_id):
+def inspect_container(container_id: str) -> dict:
     try:
         result = sp.check_output(
             [
@@ -914,7 +1005,7 @@ def inspect_container(container_id):
                 "-s",
                 "--unix-socket",
                 "/var/run/docker.sock",
-                "http:/containers/{0}/json".format(container_id),
+                f"http:/containers/{container_id}/json",
             ]
         )
         return json.loads(result)
@@ -922,42 +1013,42 @@ def inspect_container(container_id):
         return {}
 
 
-def show_ip_address(json):
+def show_ip_address(container_info: dict) -> None:
     ip = "-"
     try:
-        ip = list(json["NetworkSettings"]["Networks"].items())[0][1]["IPAddress"]
+        ip = list(container_info["NetworkSettings"]["Networks"].items())[0][1][
+            "IPAddress"
+        ]
     except (KeyError, IndexError, TypeError):
         try:
             ip = sp.check_output(["hostname", "-i"]).decode().rstrip("\n")
         except Exception:
             pass
-    log("* IP Address: {0}".format(ip))
+    log(f"* IP Address: {ip}")
 
 
-def show_ports(json):
-    ports = json.get("NetworkSettings", {}).get("Ports", {})
+def show_ports(container_info: dict) -> None:
+    ports = container_info.get("NetworkSettings", {}).get("Ports", {})
     ports_format = []
     for container_port in ports:
         host = ports[container_port]
         if host:
             for host_port in host:
                 ports_format.append(
-                    "{0}:{1} -> {2}".format(
-                        host_port["HostIp"], host_port["HostPort"], container_port
-                    )
+                    f"{host_port['HostIp']}:{host_port['HostPort']} -> {container_port}"
                 )
         else:
             ports_format.append(container_port)
     ports_str = "\n         ".join(ports_format) if ports_format else "-"
-    log("* Ports: {0}".format(ports_str))
+    log(f"* Ports: {ports_str}")
 
 
-def format_step(step):
+def format_step(step: str) -> str:
     service, action = step.split(":")
-    return "* {0}: {1}".format(service, action)
+    return f"* {service}: {action}"
 
 
-def format_error(response):
+def format_error(response: dict) -> str:
     if "error" not in response:
         return "Error: unexpected server response"
     error_obj = response["error"]
@@ -975,21 +1066,19 @@ def format_error(response):
         subsequent_indent="    ",
         **WRAP_KWARGS,
     )
-    return "Error:\n  id: {}\n{}\n{}\n{}".format(
-        error_id, nodes_str, descr_str, details_str
-    )
+    return f"Error:\n  id: {error_id}\n{nodes_str}\n{descr_str}\n{details_str}"
 
 
-def format_dict(details, indent):
+def format_dict(details: dict, indent: str) -> str:
     result = ""
     for key, value in list(details.items()):
         if isinstance(value, dict):
-            result += indent + "{}:\n".format(key)
+            result += f"{indent}{key}:\n"
             result += format_dict(value, indent + "  ")
         else:
             result += (
                 textwrap.fill(
-                    "{}: {}".format(key, value),
+                    f"{key}: {value}",
                     initial_indent=indent,
                     subsequent_indent=indent + "  ",
                     **WRAP_KWARGS,
@@ -999,13 +1088,13 @@ def format_dict(details, indent):
     return result
 
 
-def unwrap_error_with_hosts(error_obj):
+def unwrap_error_with_hosts(error_obj: dict) -> Tuple[str, str, dict, List[str]]:
     """Extracts original error from a wrapper listing hosts
-    where the error occurred"""
+    where the error occurred."""
     error_id = error_obj.get("id")
     description = error_obj.get("description")
     details = error_obj.get("details", {})
-    nodes = []
+    nodes: List[str] = []
 
     if error_id == "errorOnNodes" and "error" in details:
         error_id = details["error"]["id"]
@@ -1016,59 +1105,22 @@ def unwrap_error_with_hosts(error_obj):
     return error_id, description, details, nodes
 
 
-def print_logs(log_level, starting_log_cursors=None, infinitely=True):
-    # first run of the function
-    if not isinstance(starting_log_cursors, list):
-        starting_log_cursors = []
-        if log_level in LOG_LEVELS:
-            log("\nLogging on '{0}' level:".format(log_level))
-            for log_prefix, log_dir in LOGS:
-                log_file = os.path.join(log_dir, log_level + ".log")
-                starting_log_cursors.append((log_prefix, log_file, None, None))
-        else:
-            log("\nLogging to stdout disabled (log level = {})".format(log_level))
-
-    new_log_cursors = print_new_logs(starting_log_cursors)
-    while infinitely:
-        new_log_cursors = print_new_logs(new_log_cursors)
-        time.sleep(1)
-    return new_log_cursors
+# =============================================================================
+# Utilities
+# =============================================================================
 
 
-def print_new_logs(log_cursors):
-    new_logs = []
-
-    for log_prefix, log_file, log_fd, log_ino in log_cursors:
-        try:
-            if os.stat(log_file).st_ino != log_ino:
-                if log_fd:
-                    log_fd.close()
-                log_fd = open(log_file, "r")
-                log_ino = os.stat(log_file).st_ino
-
-            log_line = log_fd.readline()
-            while log_line:
-                log("{0} {1}".format(log_prefix, log_line), end="")
-                log_line = log_fd.readline()
-
-            new_logs.append((log_prefix, log_file, log_fd, log_ino))
-        except:
-            new_logs.append((log_prefix, log_file, None, None))
-
-    return new_logs
-
-
-def is_fresh_install():
+def is_fresh_install() -> bool:
     """True if there is no preexisting persistence (fresh deployment)."""
     return not os.path.isdir(COUCHBASE_DATA_DIR)
 
 
-def log(message, end="\n"):
+def log(message: str, end: str = "\n") -> None:
     sys.stdout.write(message + end)
     sys.stdout.flush()
 
 
-def replace(file_path, pattern, value):
+def replace_in_file(file_path: str, pattern: str, value: str) -> None:
     with open(file_path, "r+") as f:
         content = f.read()
         content = re.sub(pattern, value, content)
@@ -1077,12 +1129,9 @@ def replace(file_path, pattern, value):
         f.write(content)
 
 
-def env_bool(key, default=False):
-    return get_env(key, str(default)).lower() in ("true", "1")
-
-
-def get_env(key, default=None):
-    return os.environ.get(key, default)
+def env_bool(key: str, default: bool = False) -> bool:
+    """Interpret an environment variable as a boolean (truthy: 'true', '1')."""
+    return os.environ.get(key, str(default)).lower() in ("true", "1")
 
 
 if __name__ == "__main__":
