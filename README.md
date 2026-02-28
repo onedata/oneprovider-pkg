@@ -45,9 +45,10 @@ With persistence:
 docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:25.0 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
 ```
 Notes:
+* **WARNING**: The hostname must be set to the same value between consecutive runs
+  e.g. `-h op`, like above). Otherwise, the service will not start and won't give
+  you any hints or logs why.
 * Demo mode with persistence requires version `>= 25.0`.
-* Hostname must be set to the same value between consecutive runs
-  (e.g. `-h op`, like above).
 * The persistence directory mounted from the host must be the same between
   consecutive runs (`/tmp/op-pers` in above example).
 * The POSIX storage mounted from the host must be the same between
