@@ -159,8 +159,8 @@ MSG_FAILURE_FOOTER = (
 )
 
 MSG_COULD_NOT_RESOLVE_VERSION = """Could not resolve the previously deployed software version;
-for versions < 25.1, this information is not supported. Assuming the previously running
-version was NOT LOWER THAN 20.02.1.
+for versions < 25.1, this information is not supported. 
+Assuming the previously running version was NOT LOWER THAN 20.02.1.
 
 WARNING: if you are upgrading from version 19.02.* or lower, STOP the deployment
 and first upgrade to 20.02.*. Otherwise, let it continue.
@@ -182,7 +182,7 @@ Resuming Oneprovider in version {current_version} ...
 
 MSG_RESUME_UPGRADE = """Preexisting persistence has been detected, version {prev_version}
 
-Resuming Oneprovider and upgrading to version {current_version}  ...
+Resuming Oneprovider and upgrading to version {current_version} ...
 
 The upgrade will be performed during the startup of services. 
 Please allow more time until the services are operational.
@@ -219,20 +219,22 @@ Downgrades are not supported. Please use Oneprovider in version {prev_version} o
 """
 
 MSG_ONEZONE_CONNECTION_FAILED = (
-    "Provider is registered (Onezone domain and token are present)\n"
+    "The provider is registered (Onezone domain and token are present),\n"
     "but the launch script could not connect to Onezone to resolve the previously deployed version.\n"
     "Please check network connectivity and that Onezone at the configured domain is reachable.\n"
+    "\n"
     "Details: {details}\n"
     "\n"
-    "ERROR: Starting the container failed - see above."
+    "ERROR: Failed to start the container - see above."
 )
 
 MSG_ONEZONE_VERSION_PARSE_FAILED = (
-    "Provider is registered and connection to Onezone succeeded,\n"
+    "The provider is registered and the connection to Onezone succeeded,\n"
     "but the launch script could not parse the deployed version from the cluster info.\n"
+    "\n"    
     "Details: {details}\n"
     "\n"
-    "ERROR: Starting the container failed - see above."
+    "ERROR: Failed to start the container - see above."
 )
 
 
