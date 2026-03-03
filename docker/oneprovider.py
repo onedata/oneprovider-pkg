@@ -218,6 +218,23 @@ ERROR: You are attempting to run Oneprovider in version {current_version}
 Downgrades are not supported. Please use Oneprovider in version {prev_version} or newer.
 """
 
+MSG_ONEZONE_CONNECTION_FAILED = (
+    "Provider is registered (Onezone domain and token are present)\n"
+    "but the launch script could not connect to Onezone to resolve the previously deployed version.\n"
+    "Please check network connectivity and that Onezone at the configured domain is reachable.\n"
+    "Details: {details}\n"
+    "\n"
+    "ERROR: Starting the container failed - see above."
+)
+
+MSG_ONEZONE_VERSION_PARSE_FAILED = (
+    "Provider is registered and connection to Onezone succeeded,\n"
+    "but the launch script could not parse the deployed version from the cluster info.\n"
+    "Details: {details}\n"
+    "\n"
+    "ERROR: Starting the container failed - see above."
+)
+
 
 # -----------------------------------------------------------------------------
 # Exceptions
@@ -463,8 +480,6 @@ def infer_version_from_onezone() -> Optional[str]:
         return None
 
     cluster_info = fetch_cluster_info(oz_domain, cluster_id, token)
-    if cluster_info is None:
-        return None
 
     try:
         data = json.loads(cluster_info)
@@ -472,8 +487,8 @@ def infer_version_from_onezone() -> Optional[str]:
         log(f"Resolved previous version from Onezone: {version}")
         return version
     except (ValueError, KeyError, TypeError) as e:
-        log(f"Failed to parse version from Onezone cluster info: {e}")
-        return None
+        log(MSG_ONEZONE_VERSION_PARSE_FAILED.format(details=e))
+        sys.exit(1)
 
 
 def parse_oz_domain() -> Optional[str]:
@@ -507,7 +522,7 @@ def read_provider_credentials() -> Tuple[Optional[str], Optional[str]]:
         return None, None
 
 
-def fetch_cluster_info(oz_domain: str, cluster_id: str, token: str) -> Optional[str]:
+def fetch_cluster_info(oz_domain: str, cluster_id: str, token: str) -> str:
     """GET /api/v3/onezone/clusters/{cluster_id} from Onezone.
 
     Returns the raw response body (str) or None on failure.
@@ -524,8 +539,8 @@ def fetch_cluster_info(oz_domain: str, cluster_id: str, token: str) -> Optional[
         r.raise_for_status()
         return r.text
     except requests.RequestException as e:
-        log(f"Onezone cluster info request failed: {e}")
-        return None
+        log(MSG_ONEZONE_CONNECTION_FAILED.format(details=e))
+        sys.exit(1)
 
 
 def check_upgradability(
