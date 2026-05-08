@@ -14,6 +14,9 @@
     in the rename modal.
 -   **VFS-13374** Web GUI: Added option to ignore Europeana metadata
     validation errors before submit.
+-   **VFS-13324** Web GUI: Added experimental support for customizing
+    style of the sidebar using static files without rebuilding the
+    software.
 -   **VFS-13307** Implemented an improved process pool for handling
     GraphSync requests. Now, a single client can't flood the Onezone
     server with requests, as it can occupy only some of the pool.
