@@ -59,14 +59,14 @@ RUN case ${RELEASE_TYPE} in \
 # Install ones3 package
 RUN case ${RELEASE_TYPE} in \
         production) \
-            curl -O http://packages.onedata.org/oneclient-${RELEASE}.sh; \
+            curl -O http://packages.onedata.org/oneclient.sh; \
             ;; \
         *) \
-            curl -O http://packages.devel.onedata.org/oneclient-${RELEASE}.sh; \
+            curl -O http://packages.devel.onedata.org/oneclient.sh; \
             ;; \
     esac && \
-    sh oneclient-${RELEASE}.sh ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
-    rm -f oneclient-${RELEASE}.sh
+    sh oneclient.sh --package ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
+    rm -f oneclient.sh
 
 
 # Backup files from persistence, as the persistent volume will be overwritten
