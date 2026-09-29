@@ -37,17 +37,18 @@ Assumes that demo Onezone is already running, under container name `oz`.
 
 Without persistence:
 ```bash
-docker run -it --rm --name op onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+docker run -it --rm --name op onedata/oneprovider:25.0 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
 ```
 
 With persistence:
 ```bash
-docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:21.02.9 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
+docker run -it --rm --name op -h op -v /tmp/op-pers:/volumes/persistence -v /tmp/op-storage:/volumes/storage onedata/oneprovider:25.0 demo $(docker inspect --format '{{ .NetworkSettings.IPAddress }}' oz)
 ```
 Notes:
-* Demo mode with persistence requires version `>= 21.02.9`.
-* Hostname must be set to the same value between consecutive runs
-  (e.g. `-h op`, like above).
+* **WARNING**: The hostname must be set to the same value between consecutive runs
+  e.g. `-h op`, like above). Otherwise, the service will not start and won't give
+  you any hints or logs why.
+* Demo mode with persistence requires version `>= 25.0`.
 * The persistence directory mounted from the host must be the same between
   consecutive runs (`/tmp/op-pers` in above example).
 * The POSIX storage mounted from the host must be the same between
@@ -56,20 +57,6 @@ Notes:
 ## Support
 
 Please use [GitHub issues](https://github.com/onedata/onedata/issues) mechanism as the main channel for reporting bugs and requesting support or new features.
-
-## Copyright and license
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 
 ## Acknowledgements
 This work was supported in part by 2017's research funds in the scope of the co-financed international projects framework (project no. 3711/H2020/2017/2).
