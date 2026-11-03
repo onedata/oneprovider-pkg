@@ -56,17 +56,22 @@ RUN case ${RELEASE_TYPE} in \
     sh oneprovider-${RELEASE}.sh oneprovider=${ONEPROVIDER_VERSION}-1~${DISTRIBUTION} && \
     rm -f oneprovider-${RELEASE}.sh
 
-# Install ones3 package
+# Install ones3 package. Development builds use the ${RELEASE} repository
+# directly, as oneclient.sh derives the repository from the package version.
 RUN case ${RELEASE_TYPE} in \
         production) \
-            curl -O http://packages.onedata.org/oneclient.sh; \
+            curl -O http://packages.onedata.org/oneclient.sh && \
+            sh oneclient.sh --package ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
+            rm -f oneclient.sh; \
             ;; \
         *) \
-            curl -O http://packages.devel.onedata.org/oneclient.sh; \
+            curl -fsSL http://packages.devel.onedata.org/onedata.gpg.key | apt-key add - && \
+            echo "deb [arch=amd64] http://packages.devel.onedata.org/apt/ubuntu/${RELEASE} ${DISTRIBUTION} main" \
+                > /etc/apt/sources.list.d/onedata.list && \
+            apt-get -y update && \
+            apt-get -y install ones3=${ONES3_VERSION}-1~${DISTRIBUTION}; \
             ;; \
-    esac && \
-    sh oneclient.sh --package ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
-    rm -f oneclient.sh
+    esac
 
 
 # Backup files from persistence, as the persistent volume will be overwritten
