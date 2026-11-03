@@ -289,9 +289,14 @@ docker: docker-dev
                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
                       --name oneprovider \
                       --publish docker
-	docker tag $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest
-	docker push $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest
-	docker rmi $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION)
+	@# If this a release branch then create and push a '-latest' release image
+	@if ! echo "$(ONEPROVIDER_VERSION)" | grep -qE '\.[0-9a-z]{4,}$$'; then \
+		echo "This a release branch. Creating docker image $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest..."; \
+		docker tag $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+		docker push $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+		docker rmi $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+	fi 
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION)
 
 docker-dev:
 	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
@@ -309,10 +314,14 @@ docker-dev:
                       --short-report docker-dev-build-list.json \
                       --name oneprovider-dev \
                       --publish docker
-	docker tag $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest
-	docker push $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest
-	docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION)
-
+	@# If this a release branch then create and push a '-latest' release image
+	@if ! echo "$(ONEPROVIDER_VERSION)" | grep -qE '\.[0-9a-z]{4,}$$'; then \
+		echo "This a release branch. Creating docker image $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest..."; \
+		docker tag $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+		docker push $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+		docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+	fi 
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION)
 
 codetag-tracker:
 	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package,oneclient
