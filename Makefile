@@ -297,7 +297,8 @@ docker: docker-dev
 		docker push $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
 		docker rmi $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
 	fi 
-	@docker rmi $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION)
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION) || true
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider:develop || true
 
 docker-dev:
 	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
@@ -322,7 +323,8 @@ docker-dev:
 		docker push $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
 		docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
 	fi 
-	@docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION)
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION) || true
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:develop || true
 
 codetag-tracker:
 	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package,oneclient
