@@ -5,13 +5,41 @@ MAINTAINER Krzysztof Trzepla <krzysztof.trzepla@gmail.com>
 # Build arguments
 ARG RELEASE
 ARG RELEASE_TYPE
-ARG DISTRIBUTION=bionic
+ARG DISTRIBUTION=focal
 ARG OP_PANEL_VERSION
 ARG CLUSTER_MANAGER_VERSION
 ARG OP_WORKER_VERSION
 ARG ONEPROVIDER_VERSION
+ARG ONES3_VERSION
 ARG ONEPANEL_AUTOSTART=false
 ARG HTTP_PROXY
+
+RUN mkdir -p /volumes/storage
+VOLUME ["/volumes/storage"]
+
+RUN pip3 install pyYAML
+RUN apt update && apt install -y python-is-python2 ca-certificates && apt clean
+
+ADD persistence-dir.py /root/persistence-dir.py
+
+# Add scripts handling service starting and stopping
+ADD oneprovider.sh /root/oneprovider.sh
+ADD oneprovider.py /root/oneprovider.py
+ADD oneprovider-stop-graceful.sh /root/oneprovider-stop-graceful.sh
+ADD await /usr/local/bin/await
+ADD internal-scripts/oneprovider-do-stop.sh /root/internal-scripts/oneprovider-do-stop.sh
+ADD internal-scripts/oneprovider-ensure-stopped.sh /root/internal-scripts/oneprovider-ensure-stopped.sh
+ADD internal-scripts/common.sh /root/internal-scripts/common.sh
+
+# Add scripts related to demo mode
+ADD demo-mode/await-demo         /usr/local/bin/await-demo
+ADD demo-mode/await-demo-onezone /usr/local/bin/await-demo-onezone
+ADD demo-mode/better-curl.sh     /root/demo-mode/better-curl.sh
+ADD demo-mode/demo               /usr/local/bin/demo
+ADD demo-mode/demo-access-token  /usr/local/bin/demo-access-token
+ADD demo-mode/demo-common.sh     /root/demo-mode/demo-common.sh
+ADD demo-mode/setup-demo.sh      /root/demo-mode/setup-demo.sh
+
 
 # Install oneprovider package
 RUN case ${RELEASE_TYPE} in \
@@ -28,20 +56,24 @@ RUN case ${RELEASE_TYPE} in \
     sh oneprovider-${RELEASE}.sh oneprovider=${ONEPROVIDER_VERSION}-1~${DISTRIBUTION} && \
     rm -f oneprovider-${RELEASE}.sh
 
-RUN mkdir -p /volumes/storage
-VOLUME ["/volumes/storage"]
+# Install ones3 package
+RUN case ${RELEASE_TYPE} in \
+        production) \
+            curl -O http://packages.onedata.org/oneclient.sh; \
+            ;; \
+        *) \
+            curl -O http://packages.devel.onedata.org/oneclient.sh; \
+            ;; \
+    esac && \
+    sh oneclient.sh --package ones3=${ONES3_VERSION}-1~${DISTRIBUTION} && \
+    rm -f oneclient.sh
+
 
 # Backup files from persistence, as the persistent volume will be overwritten
 # by mounting it from host. The missing files will be copied back in entrypoint.
-ADD persistence-dir.py /root/persistence-dir.py
-RUN python /root/persistence-dir.py --backup-persistent-files
-
+RUN python3 /root/persistence-dir.py --backup-persistent-files
 # Create symlinks to persistence
-RUN python /root/persistence-dir.py --create-symlinks
-
-# Add entrypoint scripts
-ADD oneprovider.sh /root/oneprovider.sh
-ADD oneprovider.py /root/oneprovider.py
+RUN python3 /root/persistence-dir.py --create-symlinks
 
 # Disable http_proxy for normal operation
 ENV http_proxy ""

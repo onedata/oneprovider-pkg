@@ -74,8 +74,7 @@ def onezone(request):
                 config_path, self.node)
             self.dockers = dockers
 
-    result = env.up(tests.utils.path_utils.config_file('env.json'),
-                    image='onedata/worker:{}-4'.format(release,))
+    result = env.up(tests.utils.path_utils.config_file('env.json'))
     dockers = result['docker_ids']
 
     request.addfinalizer(lambda: docker.remove(
@@ -98,9 +97,10 @@ def oneprovider(request, onezone, setup_command):
     command = setup_command.format(repo=distribution.repo,
                                    release=distribution.release)
     command = '{command} && ' \
-        'yum -y install python-setuptools python-pip && ' \
-        'pip install --upgrade pip==20.3.4 && ' \
-        'pip install requests'.format(command=command)
+        'yum -y install python-setuptools && ' \
+        'curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py && ' \
+        'python /tmp/get-pip.py && ' \
+        'python -m pip install requests'.format(command=command)
 
     assert 0 == docker.exec_(distribution.container,
                              interactive=True,
@@ -124,6 +124,7 @@ def get_registration_token(distribution, onezone_domain):
     return json.loads(output)['token']
 
 
+@pytest.mark.skip()
 def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
                              interactive=True,

@@ -5,8 +5,8 @@ DOCKER_RELEASE          ?= development
 DOCKER_REG_NAME         ?= "docker.onedata.org"
 DOCKER_REG_USER         ?= ""
 DOCKER_REG_PASSWORD     ?= ""
-PROD_RELEASE_BASE_IMAGE ?= "onedata/oneprovider-common:2102-3"
-DEV_RELEASE_BASE_IMAGE  ?= "onedata/oneprovider-dev-common:2102-7"
+PROD_RELEASE_BASE_IMAGE ?= "onedata/oneprovider-common:25-1"
+DEV_RELEASE_BASE_IMAGE  ?= "onedata/oneprovider-dev-common:25-1"
 HTTP_PROXY              ?= "http://proxy.devel.onedata.org:3128"
 RETRIES                 ?= 0
 RETRY_SLEEP             ?= 300
@@ -26,14 +26,19 @@ endif
 ifeq ($(strip $(OP_PANEL_VERSION)),)
 OP_PANEL_VERSION        := $(shell git -C onepanel describe --tags --always --abbrev=7)
 endif
+ifeq ($(strip $(ONES3_VERSION)),)
+ONES3_VERSION        := $(shell git -C oneclient describe --tags --always --abbrev=7)
+endif
+
 
 ONEPROVIDER_VERSION           := $(shell echo ${ONEPROVIDER_VERSION} | tr - .)
 CLUSTER_MANAGER_VERSION       := $(shell echo ${CLUSTER_MANAGER_VERSION} | tr - .)
 OP_WORKER_VERSION             := $(shell echo ${OP_WORKER_VERSION} | tr - .)
 OP_PANEL_VERSION              := $(shell echo ${OP_PANEL_VERSION} | tr - .)
+ONES3_VERSION                 := $(shell echo ${ONES3_VERSION} | tr - .)
 
 ONEPROVIDER_BUILD       ?= 1
-PKG_BUILDER_VERSION     ?= -3
+PKG_BUILDER_VERSION     ?= 25-1
 
 ifdef IGNORE_XFAIL
 TEST_RUN := ./test_run.py --ignore-xfail
@@ -64,12 +69,12 @@ NO_CACHE :=  $(shell if [ "${NO_CACHE}" != "" ]; then echo "--no-cache"; fi)
 make = $(1)/make.py -s $(1) -r . $(NO_CACHE)
 clean = $(call make, $(1)) clean
 retry = RETRIES=$(RETRIES); until $(1) && return 0 || [ $$RETRIES -eq 0 ]; do sleep $(RETRY_SLEEP); RETRIES=`expr $$RETRIES - 1`; echo "===== Cleaning up... ====="; $(if $2,$2,:); echo "\n\n\n===== Retrying build... ====="; done; return 1 
-make_rpm = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) $(2)  
+make_rpm = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) $(2)  
 mv_rpm = mv $(1)/package/packages/*.src.rpm package/$(DISTRIBUTION)/SRPMS && \
 	mv $(1)/package/packages/*.x86_64.rpm package/$(DISTRIBUTION)/x86_64
 mv_noarch_rpm = mv $(1)/package/packages/*.src.rpm package/$(DISTRIBUTION)/SRPMS && \
 	mv $(1)/package/packages/*.noarch.rpm package/$(DISTRIBUTION)/x86_64
-make_deb = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) --privileged --group sbuild -i onedata/deb_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) $(2)
+make_deb = $(call make, $(1)) -e DISTRIBUTION=$(DISTRIBUTION) --privileged --grant-sudo-rights --group sbuild -i onedata/deb_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) $(2)
 mv_deb = mv $(1)/package/packages/*_amd64.deb package/$(DISTRIBUTION)/binary-amd64 && \
 	mv $(1)/package/packages/*.tar.gz package/$(DISTRIBUTION)/source | true && \
 	mv $(1)/package/packages/*.dsc package/$(DISTRIBUTION)/source | true && \
@@ -92,6 +97,7 @@ print_package_versions:
 	@echo "cluster-manager:\t" $(CLUSTER_MANAGER_VERSION)
 	@echo "op-worker:\t\t" $(OP_WORKER_VERSION)
 	@echo "op-panel:\t\t" $(OP_PANEL_VERSION)
+	@echo "oneclient:\t\t" $(ONES3_VERSION)
 
 ##
 ## Submodules
@@ -148,10 +154,6 @@ artifact_onepanel:
 ## Test
 ##
 
-BROWSER             ?= Chrome
-RECORDING_OPTION    ?= failed
-
-
 test_provider_packaging test_packaging:
 	$(call retry, ${TEST_RUN} --error-for-skips --test-type packaging -k "oneprovider" -vvv --test-dir tests/packaging -s)
 
@@ -195,13 +197,13 @@ rpm_oneprovider: rpm_op_panel rpm_op_worker rpm_cluster_manager
 	sed -i 's/{{op_worker_version}}/$(OP_WORKER_VERSION)/g' oneprovider_meta/oneprovider.spec
 	sed -i 's/{{op_panel_version}}/$(OP_PANEL_VERSION)/g' oneprovider_meta/oneprovider.spec
 
-	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) \
+	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) \
 		    -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -c \
 	        mock --buildsrpm --spec oneprovider_meta/oneprovider.spec \
 	        --sources oneprovider_meta --root $(DISTRIBUTION) \
 	        --resultdir oneprovider_meta/package/packages)
 
-	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(RELEASE)$(PKG_BUILDER_VERSION) \
+	$(call retry, bamboos/docker/make.py -i onedata/rpm_builder:$(DISTRIBUTION)-$(PKG_BUILDER_VERSION) \
 		    -e DISTRIBUTION=$(DISTRIBUTION) -e RELEASE=$(RELEASE) --privileged --group mock -c \
 	        mock --rebuild oneprovider_meta/package/packages/*.src.rpm \
 	        --root $(DISTRIBUTION) --resultdir oneprovider_meta/package/packages)
@@ -283,9 +285,18 @@ docker: docker-dev
                       --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
                       --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
                       --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
+                      --build-arg ONES3_VERSION=$(ONES3_VERSION) \
                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
                       --name oneprovider \
-                      --publish --remove docker
+                      --publish docker
+	@# If this a release branch then create and push a '-latest' release image
+	@if ! echo "$(ONEPROVIDER_VERSION)" | grep -qE '\.[0-9a-z]{4,}$$'; then \
+		echo "This a release branch. Creating docker image $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest..."; \
+		docker tag $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+		docker push $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+		docker rmi $(DOCKER_REG_NAME)/oneprovider:$(RELEASE)-latest; \
+	fi 
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider:$(ONEPROVIDER_VERSION)
 
 docker-dev:
 	./docker_build.py --repository $(DOCKER_REG_NAME) --user $(DOCKER_REG_USER) \
@@ -297,11 +308,20 @@ docker-dev:
                       --build-arg CLUSTER_MANAGER_VERSION=$(CLUSTER_MANAGER_VERSION) \
                       --build-arg OP_WORKER_VERSION=$(OP_WORKER_VERSION) \
                       --build-arg ONEPROVIDER_VERSION=$(ONEPROVIDER_VERSION) \
+                      --build-arg ONES3_VERSION=$(ONES3_VERSION) \
                       --build-arg HTTP_PROXY=$(HTTP_PROXY) \
                       --report docker-dev-build-report.txt \
                       --short-report docker-dev-build-list.json \
                       --name oneprovider-dev \
-                      --publish --remove docker
+                      --publish docker
+	@# If this a release branch then create and push a '-latest' release image
+	@if ! echo "$(ONEPROVIDER_VERSION)" | grep -qE '\.[0-9a-z]{4,}$$'; then \
+		echo "This a release branch. Creating docker image $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest..."; \
+		docker tag $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION) $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+		docker push $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+		docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(RELEASE)-latest; \
+	fi 
+	@docker rmi $(DOCKER_REG_NAME)/oneprovider-dev:$(ONEPROVIDER_VERSION)
 
 codetag-tracker:
-	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package
+	./bamboos/scripts/codetag-tracker.sh --branch=${BRANCH} --excluded-dirs=node_package,oneclient

@@ -12,6 +12,7 @@ file_dir = os.path.dirname(os.path.realpath(__file__))
 with open('./RELEASE', 'r') as f:
     release = f.read().replace('\n', '')
 
+
 class Distribution(object):
 
     def __init__(self, request, link={}, privileged=False):
@@ -67,8 +68,7 @@ def onezone(request):
                 config_path, self.node)
             self.dockers = dockers
 
-    result = env.up(tests.utils.path_utils.config_file('env.json'),
-                    image='onedata/worker:{}-4'.format(release,))
+    result = env.up(tests.utils.path_utils.config_file('env.json'))
     dockers = result['docker_ids']
 
     request.addfinalizer(lambda: docker.remove(
@@ -76,8 +76,9 @@ def onezone(request):
 
     return Onezone(result['oz_worker_nodes'], dockers)
 
+
 @pytest.fixture(scope='module',
-                params=['bionic'])
+                params=['focal'])
 def oneprovider(request, onezone, setup_command):
     onezone_node = onezone.domain
     # onezone_node is in format node.oz.1234.test, resolve domain (oz.1234.test)
@@ -91,7 +92,7 @@ def oneprovider(request, onezone, setup_command):
     command = setup_command.format(dist=distribution.name,
                                    release=distribution.release)
     command = '{command} && ' \
-        'apt-get install -y python-pip gnupg2 libssl1.0.0 && ' \
+        'apt-get install -y python3-pip gnupg2 libssl1.1 && ' \
         'pip install requests'.format(command=command)
 
     assert 0 == docker.exec_(distribution.container,
@@ -105,6 +106,7 @@ def oneprovider(request, onezone, setup_command):
 
     return distribution
 
+
 def get_registration_token(distribution, onezone_domain):
     uri = '/api/v3/onezone/user/clusters/provider_registration_token/'
     cmd = 'curl -Ss -k -X POST -u provideradmin:password https://{}{}'.format(
@@ -113,11 +115,12 @@ def get_registration_token(distribution, onezone_domain):
                           tty=True, output=True, command=cmd).strip()
     return json.loads(output)['token']
 
+
 def test_oneprovider_installation(oneprovider):
     result = docker.exec_(oneprovider.container,
                              interactive=True,
                              tty=True,
-                             command='python /root/data/install_oneprovider.py {}'
+                             command='python3 /root/data/install_oneprovider.py {}'
                                      .format(oneprovider.name))
     config_file = tests.utils.path_utils.config_file('config.yml')
     tests.packaging.oneprovider_common.reset_token_in_config(config_file)
